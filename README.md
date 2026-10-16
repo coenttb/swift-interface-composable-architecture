@@ -48,6 +48,28 @@ A domain may instead use generic interpretations without any FeatureProtocol con
 
 ## Boundaries
 
+`@View` accepts stored `@Bindable` inputs for externally supplied observable objects,
+including TCA26 stores:
+
+```swift
+@View struct BrowserView {
+    @Bindable var browser: StoreOf<Browser>
+    var body: some SwiftUI.View { TextField("Search", text: $browser.query) }
+}
+
+// The generated initializer takes the existing store, not a Bindable wrapper.
+let view = BrowserView(browser: store)
+```
+
+The initializer assigns `self._browser = SwiftUI.Bindable(browser)`. It preserves the
+supplied object's identity and does not create a store or view-owned state. The supported
+spellings are `@Bindable`, `@SwiftUI.Bindable`, and `@SwiftUI::Bindable`. Inputs must be
+stored `var` properties with explicit types and no inline defaults or wrapper arguments.
+Swift checks the observable-object constraint. Other wrappers still require explicit
+macro support; `@Binding` inputs and private `@State`/`@FocusState` storage are unchanged.
+With `@View(Domain.self)`, the generated `store` remains reserved; additional bindable
+inputs must use another name. This is initializer ergonomics, not a performance claim.
+
 These features require Copyable state values. The operation algebra itself supports a
 wider ownership model; these interpreters do not pretend that TCA state supports it all.
 The runtime `Operation.Operable.run` contract throws `any Error`; the concrete error is

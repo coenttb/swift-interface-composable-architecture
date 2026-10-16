@@ -50,6 +50,15 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "Interface Composition Macro Tests",
+            dependencies: [
+                "Interface Composition Macro Plugin",
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacrosGenericTestSupport", package: "swift-syntax"),
+            ]
+        ),
+        .testTarget(
             name: "Interface ComposableArchitecture Tests",
             dependencies: [
                 .product(name: "ComposableArchitectureTestSupport", package: "TCA26"),

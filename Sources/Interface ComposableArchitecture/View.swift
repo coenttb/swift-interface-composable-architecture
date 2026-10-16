@@ -4,6 +4,8 @@ public import CasePaths
 
 /// Derive construction from a view's input product. An optional feature argument
 /// supplies its existing store and bindings; it never creates a feature or store.
+/// Stored `@Bindable` inputs accept the original observable object, preserving its
+/// identity and exposing SwiftUI bindings without introducing view-owned state.
 @attached(memberAttribute)
 @attached(extension, conformances: SwiftUI.View)
 @attached(member, names: named(store), named(_store), named($store), named(init))

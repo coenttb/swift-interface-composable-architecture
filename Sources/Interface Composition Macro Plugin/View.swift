@@ -69,14 +69,26 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
             guard let variable = member.decl.as(VariableDeclSyntax.self),
                 !variable.modifiers.contains(where: { ["static", "class"].contains($0.name.text) }) else { continue }
             var bindingInput = false
+            var bindableInput = false
             let names = variable.attributes.compactMap { $0.as(AttributeSyntax.self)?.attributeName.trimmedDescription }.filter { $0 != "MainActor" }
             if !names.isEmpty {
                 if names.count == 1, ["Binding", "SwiftUI.Binding", "SwiftUI::Binding"].contains(names[0]) {
                     bindingInput = true
+                } else if names.count == 1, ["Bindable", "SwiftUI.Bindable", "SwiftUI::Bindable"].contains(names[0]) {
+                    bindableInput = true
+                    guard variable.bindingSpecifier.text == "var",
+                        variable.bindings.allSatisfy({ $0.accessorBlock == nil }) else {
+                        throw MacroExpansionErrorMessage("@Bindable inputs must be stored var properties.")
+                    }
+                    guard variable.attributes.compactMap({ $0.as(AttributeSyntax.self) })
+                        .filter({ $0.attributeName.trimmedDescription != "MainActor" })
+                        .allSatisfy({ $0.arguments == nil }) else {
+                        throw MacroExpansionErrorMessage("@Bindable inputs cannot declare wrapper arguments; supply the observable through the view initializer.")
+                    }
                 } else {
                 guard names.count == 1,
                     ["State", "SwiftUI.State", "SwiftUI::State", "FocusState", "SwiftUI.FocusState", "SwiftUI::FocusState"].contains(names[0]) else {
-                    throw MacroExpansionErrorMessage("@View supports @Binding inputs and @State/@FocusState local storage; other attributed inputs require explicit support.")
+                    throw MacroExpansionErrorMessage("@View supports @Binding/@Bindable inputs and @State/@FocusState local storage; other attributed inputs require explicit support.")
                 }
                 guard !variable.bindings.contains(where: { $0.pattern.as(IdentifierPatternSyntax.self)?.identifier.text == "store" }),
                     variable.modifiers.contains(where: { $0.name.text == "private" }) else {
@@ -92,6 +104,12 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
                 }
                 guard name != "store" || domain == nil else {
                     throw MacroExpansionErrorMessage("@View(Domain.self) supplies store; do not redeclare it.")
+                }
+                if bindableInput {
+                    guard binding.initializer == nil else { throw MacroExpansionErrorMessage("Bindable inputs cannot declare independent default storage.") }
+                    parameters.append("\(name): \(type.trimmedDescription)")
+                    assignments.append("self._\(name) = SwiftUI.Bindable(\(name))")
+                    continue
                 }
                 if variable.bindingSpecifier.text == "let", binding.initializer != nil { continue }
                 if bindingInput {
