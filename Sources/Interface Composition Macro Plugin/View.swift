@@ -87,8 +87,8 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
                     }
                 } else {
                 guard names.count == 1,
-                    ["State", "SwiftUI.State", "SwiftUI::State", "FocusState", "SwiftUI.FocusState", "SwiftUI::FocusState"].contains(names[0]) else {
-                    throw MacroExpansionErrorMessage("@View supports @Binding/@Bindable inputs and @State/@FocusState local storage; other attributed inputs require explicit support.")
+                    localStorage.contains(names[0]) else {
+                    throw MacroExpansionErrorMessage("@View supports @Binding/@Bindable inputs and @State/@FocusState/@AppStorage/@SceneStorage local storage; other attributed inputs require explicit support.")
                 }
                 guard !variable.bindings.contains(where: { $0.pattern.as(IdentifierPatternSyntax.self)?.identifier.text == "store" }),
                     variable.modifiers.contains(where: { $0.name.text == "private" }) else {
@@ -118,7 +118,7 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
                     assignments.append("self._\(name) = \(name)")
                     continue
                 }
-                let escaping = type.is(FunctionTypeSyntax.self) ? "@escaping " : ""
+                let escaping = isFunction(type) ? "@escaping " : ""
                 let initial = binding.initializer.map { " = \($0.value.trimmedDescription)" } ?? ""
                 parameters.append("\(name): \(escaping)\(type.trimmedDescription)\(initial)")
                 assignments.append("self.\(name) = \(name)")
@@ -130,5 +130,18 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
         }
         """))
         return members
+    }
+
+    /// Wrappers whose storage the view owns: kept out of the initializer like `@State`.
+    private static let localStorage: Set<String> = Set(
+        ["State", "FocusState", "AppStorage", "SceneStorage"].flatMap { [$0, "SwiftUI.\($0)", "SwiftUI::\($0)"] }
+    )
+
+    /// A closure type, also behind type attributes such as `@MainActor` or `@Sendable`,
+    /// whose initializer parameter must be `@escaping` to be stored.
+    private static func isFunction(_ type: TypeSyntax) -> Bool {
+        if type.is(FunctionTypeSyntax.self) { return true }
+        if let attributed = type.as(AttributedTypeSyntax.self) { return isFunction(attributed.baseType) }
+        return false
     }
 }
