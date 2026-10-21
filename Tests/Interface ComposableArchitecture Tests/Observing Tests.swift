@@ -24,7 +24,7 @@ import Testing
             Observing { counter.observe($0) }
         }
         while store.value == nil { await Task.yield() }
-        store.expect { $0.value = 11 }
+        store.expect { $0.value = 11; $0.answered = .init(from: 10) }
         #expect(ledger.entries == ["observe 10"])
         await store.dismount()
     }
@@ -41,10 +41,10 @@ import Testing
             }
         }
         while store.value == nil { await Task.yield() }
-        store.expect { $0.value = 1 }
+        store.expect { $0.value = 1; $0.answered = .init(from: 1) }
         store.modify { $0.request.start = 2 }
         while store.value != 2 { await Task.yield() }
-        store.expect { $0.value = 2 }
+        store.expect { $0.value = 2; $0.answered = .init(from: 2) }
         #expect(ledger.entries == ["observe 1", "observe 2"])
         await store.dismount()
     }
@@ -61,10 +61,10 @@ import Testing
         }
     }
     while store.value != 1 { await Task.yield() }
-    store.expect { $0.value = 1 }
+    store.expect { $0.value = 1; $0.answered = .init(from: 1) }
     store.modify { $0.request.start = 2 }
     while store.value != 2 || !ledger.entries.contains("stop 1") { await Task.yield() }
-    store.expect { $0.value = 2 }
+    store.expect { $0.value = 2; $0.answered = .init(from: 2) }
     await store.dismount()
     #expect(ledger.entries.contains("stop 2"))
 }

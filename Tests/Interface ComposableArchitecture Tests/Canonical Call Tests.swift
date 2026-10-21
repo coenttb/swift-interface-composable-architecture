@@ -47,7 +47,7 @@ import Testing
     let feature = Interface_ComposableArchitecture.Observing(domain)
     let store = TestStore(initialState: .init(.init())) { feature }
     while store.value == nil { await Task.yield() }
-    store.expect { $0.value = 42 }
+    store.expect { $0.value = 42; $0.answered = $0.request }
     #expect(store.value == 42)
     await store.dismount()
 }

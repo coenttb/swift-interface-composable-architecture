@@ -127,7 +127,7 @@ extension CompositionRead: FeatureProtocol {
             }
         }
         while store.value == nil { await Task.yield() }
-        store.expect { $0.observation.value = 42 }
+        store.expect { $0.observation.value = 42; $0.observation.answered = $0.observation.request }
         #expect(store.value == 42)
         let _: Never.Type = CompositionRead.Action.self
         await store.dismount()
