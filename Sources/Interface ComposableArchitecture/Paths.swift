@@ -38,7 +38,7 @@ public struct Paths<Call: Operation.Coproduct>: CasePath {
 
         public func extract(from root: Call) -> Value? {
             switch optic.match(root) {
-            case let .right(value): value
+            case .right(let value): value
             case .left: nil
             }
         }
@@ -60,7 +60,7 @@ public func routeInterfaceCall<Root: Operation.Coproduct, Action>(
     through action: Action.Type
 ) -> Action? {
     switch Root.cases[keyPath: path].match(root) {
-    case let .right(call): call
+    case .right(let call): call
     case .left: nil
     }
 }
@@ -72,7 +72,7 @@ public func routeInterfaceCall<Root: Operation.Coproduct, Action: Calls>(
     through action: Action.Type
 ) -> Action? {
     switch Root.cases[keyPath: path].match(root) {
-    case let .right(call): Action.route(call)
+    case .right(let call): Action.route(call)
     case .left: nil
     }
 }
@@ -85,5 +85,6 @@ public func canonicalInterfaceCall<Call>(_ action: Call, as call: Call.Type) -> 
 
 /// A selected composition can forget its route without executing or rerouting it.
 public func canonicalInterfaceCall<Action: Routed>(
-    _ action: Action, as call: Action.Call.Type
+    _ action: Action,
+    as call: Action.Call.Type
 ) -> Action.Call? { action.interfaceCall }

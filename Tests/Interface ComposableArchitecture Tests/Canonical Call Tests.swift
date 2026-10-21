@@ -38,7 +38,12 @@ import Testing
 }
 
 @MainActor @Test private func observingInfersItsOperationFromTheDomainWithoutAnExpectedType() async throws {
-    let domain = CompositionRead { _ in AsyncThrowingStream { $0.yield(42); $0.finish() } }
+    let domain = CompositionRead { _ in
+        AsyncThrowingStream {
+            $0.yield(42)
+            $0.finish()
+        }
+    }
     let feature = Interface_ComposableArchitecture.Observing(domain)
     let store = TestStore(initialState: .init(.init())) { feature }
     while store.value == nil { await Task.yield() }

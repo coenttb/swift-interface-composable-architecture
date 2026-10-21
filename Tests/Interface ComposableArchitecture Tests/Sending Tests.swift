@@ -21,7 +21,10 @@ extension CounterDomain.Call: CasePathable {}
 
 @ComposableArchitecture2.Feature private struct WrappedSending {
     struct State { @StoreTaskID var writes }
-    enum Action: Calls { case call(CounterDomain.Call); case unrelated }
+    enum Action: Calls {
+        case call(CounterDomain.Call)
+        case unrelated
+    }
     let domain: CounterDomain
     var body: some FeatureProtocol<State, Action> {
         EmptyFeature().calling(\.call, domain, id: \.writes)
@@ -30,10 +33,13 @@ extension CounterDomain.Call: CasePathable {}
 
 @MainActor @Test func storePropertyNavigationSendsExactlyOneCanonicalCall() async throws {
     let ledger = Ledger()
-    let domain = CounterDomain(counter: Counter(
-        increment: { request in ledger.record("increment \(request.amount)") },
-        observe: { _ in AsyncThrowingStream { $0.finish() } }, read: { _ in 0 }
-    ))
+    let domain = CounterDomain(
+        counter: Counter(
+            increment: { request in ledger.record("increment \(request.amount)") },
+            observe: { _ in AsyncThrowingStream { $0.finish() } },
+            read: { _ in 0 }
+        )
+    )
     let direct = Store(initialState: DirectSending.State()) { DirectSending(domain: domain) }
     direct.counter.increment(by: 2)
     try await direct.writes()

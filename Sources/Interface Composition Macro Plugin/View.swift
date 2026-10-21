@@ -11,11 +11,16 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
         guard declaration.is(StructDeclSyntax.self),
-            member.is(VariableDeclSyntax.self) || member.is(FunctionDeclSyntax.self) else { return [] }
-        let modifiers = member.as(VariableDeclSyntax.self)?.modifiers ?? member.as(FunctionDeclSyntax.self)!.modifiers
-        let attributes = member.as(VariableDeclSyntax.self)?.attributes ?? member.as(FunctionDeclSyntax.self)!.attributes
+            member.is(VariableDeclSyntax.self) || member.is(FunctionDeclSyntax.self)
+        else { return [] }
+        let variable = member.as(VariableDeclSyntax.self)
+        let function = member.as(FunctionDeclSyntax.self)
+        guard let modifiers = variable?.modifiers ?? function?.modifiers,
+            let attributes = variable?.attributes ?? function?.attributes
+        else { return [] }
         guard !modifiers.contains(where: { ["static", "class", "nonisolated"].contains($0.name.text) }),
-            !attributes.contains(where: { $0.as(AttributeSyntax.self)?.attributeName.trimmedDescription == "MainActor" }) else { return [] }
+            !attributes.contains(where: { $0.as(AttributeSyntax.self)?.attributeName.trimmedDescription == "MainActor" })
+        else { return [] }
         return ["@MainActor"]
     }
 
@@ -27,9 +32,10 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         guard let view = declaration.as(StructDeclSyntax.self) else { return [] }
-        let inheritsView = view.inheritanceClause?.inheritedTypes.contains {
-            ["View", "SwiftUI.View", "SwiftUI::View"].contains($0.type.trimmedDescription)
-        } ?? false
+        let inheritsView =
+            view.inheritanceClause?.inheritedTypes.contains {
+                ["View", "SwiftUI.View", "SwiftUI::View"].contains($0.type.trimmedDescription)
+            } ?? false
         guard !inheritsView else { return [] }
         return [try ExtensionDeclSyntax("extension \(type): SwiftUI.View {}")]
     }
@@ -48,7 +54,8 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
         if let argument = arguments.first {
             guard arguments.count == 1, argument.label == nil,
                 let access = argument.expression.as(MemberAccessExprSyntax.self),
-                access.declName.baseName.text == "self", let base = access.base else {
+                access.declName.baseName.text == "self", let base = access.base
+            else {
                 throw MacroExpansionErrorMessage("Select an existing feature with @View(Domain.self), or use @View for value inputs.")
             }
             domain = base.trimmedDescription
@@ -67,7 +74,8 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
                 throw MacroExpansionErrorMessage("@View derives the input initializer; remove the handwritten initializer.")
             }
             guard let variable = member.decl.as(VariableDeclSyntax.self),
-                !variable.modifiers.contains(where: { ["static", "class"].contains($0.name.text) }) else { continue }
+                !variable.modifiers.contains(where: { ["static", "class"].contains($0.name.text) })
+            else { continue }
             var bindingInput = false
             var bindableInput = false
             let names = variable.attributes.compactMap { $0.as(AttributeSyntax.self)?.attributeName.trimmedDescription }.filter { $0 != "MainActor" }
@@ -77,29 +85,37 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
                 } else if names.count == 1, ["Bindable", "SwiftUI.Bindable", "SwiftUI::Bindable"].contains(names[0]) {
                     bindableInput = true
                     guard variable.bindingSpecifier.text == "var",
-                        variable.bindings.allSatisfy({ $0.accessorBlock == nil }) else {
+                        variable.bindings.allSatisfy({ $0.accessorBlock == nil })
+                    else {
                         throw MacroExpansionErrorMessage("@Bindable inputs must be stored var properties.")
                     }
-                    guard variable.attributes.compactMap({ $0.as(AttributeSyntax.self) })
-                        .filter({ $0.attributeName.trimmedDescription != "MainActor" })
-                        .allSatisfy({ $0.arguments == nil }) else {
+                    guard
+                        variable.attributes.compactMap({ $0.as(AttributeSyntax.self) })
+                            .filter({ $0.attributeName.trimmedDescription != "MainActor" })
+                            .allSatisfy({ $0.arguments == nil })
+                    else {
                         throw MacroExpansionErrorMessage("@Bindable inputs cannot declare wrapper arguments; supply the observable through the view initializer.")
                     }
                 } else {
-                guard names.count == 1,
-                    localStorage.contains(names[0]) else {
-                    throw MacroExpansionErrorMessage("@View supports @Binding/@Bindable inputs and @State/@FocusState/@AppStorage/@SceneStorage local storage; other attributed inputs require explicit support.")
-                }
-                guard !variable.bindings.contains(where: { $0.pattern.as(IdentifierPatternSyntax.self)?.identifier.text == "store" }),
-                    variable.modifiers.contains(where: { $0.name.text == "private" }) else {
-                    throw MacroExpansionErrorMessage("@View local state must be private and cannot be named store.")
-                }
-                continue
+                    guard names.count == 1,
+                        localStorage.contains(names[0])
+                    else {
+                        throw MacroExpansionErrorMessage(
+                            "@View supports @Binding/@Bindable inputs and @State/@FocusState/@AppStorage/@SceneStorage local storage; other attributed inputs require explicit support."
+                        )
+                    }
+                    guard !variable.bindings.contains(where: { $0.pattern.as(IdentifierPatternSyntax.self)?.identifier.text == "store" }),
+                        variable.modifiers.contains(where: { $0.name.text == "private" })
+                    else {
+                        throw MacroExpansionErrorMessage("@View local state must be private and cannot be named store.")
+                    }
+                    continue
                 }
             }
             for binding in variable.bindings where binding.accessorBlock == nil {
                 guard let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
-                    let type = binding.typeAnnotation?.type else {
+                    let type = binding.typeAnnotation?.type
+                else {
                     throw MacroExpansionErrorMessage("Declare each view input with a name and explicit type.")
                 }
                 guard name != "store" || domain == nil else {
@@ -124,11 +140,15 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
                 assignments.append("self.\(name) = \(name)")
             }
         }
-        members.append(DeclSyntax(stringLiteral: """
-        @MainActor \(access)init(\(parameters.joined(separator: ", "))) {
-            \(assignments.joined(separator: "\n"))
-        }
-        """))
+        members.append(
+            DeclSyntax(
+                stringLiteral: """
+                    @MainActor \(access)init(\(parameters.joined(separator: ", "))) {
+                        \(assignments.joined(separator: "\n"))
+                    }
+                    """
+            )
+        )
         return members
     }
 

@@ -31,9 +31,15 @@ where Symbol.Input: Copyable & Escapable, Symbol.Call: Copyable {
 
     public var body: some SwiftUI.View {
         // A confirmation, as the system draws one: a checkmark, named by the title.
-        SwiftUI.Button(role: .confirm) { store.send() } label: {
-            SwiftUI.Label { title } icon: { SwiftUI.Image(systemName: "checkmark") }
+        SwiftUI.Button(role: .confirm) {
+            store.send()
+        } label: {
+            SwiftUI.Label {
+                title
+            } icon: {
+                SwiftUI.Image(systemName: "checkmark")
+            }
         }
-            .disabled(!allowing || store.sending.isRunning)
+        .disabled(!allowing || store.sending.isRunning)
     }
 }

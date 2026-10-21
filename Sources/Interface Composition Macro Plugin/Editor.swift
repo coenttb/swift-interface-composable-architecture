@@ -19,10 +19,11 @@ public struct Editor: MemberMacro {
             .flatMap { $0.bindings }
         guard properties.count == 1, let property = properties.first,
             let name = property.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
-            let block = property.accessorBlock, case let .getter(body) = block.accessors,
+            let block = property.accessorBlock, case .getter(let body) = block.accessors,
             body.count == 1,
             let call = body.first?.item.as(FunctionCallExprSyntax.self),
-            call.calledExpression.trimmedDescription == "Editing" else {
+            call.calledExpression.trimmedDescription == "Editing"
+        else {
             throw MacroExpansionErrorMessage("Declare one computed editing policy whose body is Editing(create:update:delete:draft:…).")
         }
         func argument(_ label: String) throws -> ExprSyntax {
@@ -34,10 +35,13 @@ public struct Editor: MemberMacro {
         func coordinate(_ label: String) throws -> String {
             let value = try argument(label)
             let name: String?
-            if let reference = value.as(DeclReferenceExprSyntax.self) { name = reference.baseName.text }
-            else if let member = value.as(MemberAccessExprSyntax.self), member.base?.trimmedDescription == "self" {
+            if let reference = value.as(DeclReferenceExprSyntax.self) {
+                name = reference.baseName.text
+            } else if let member = value.as(MemberAccessExprSyntax.self), member.base?.trimmedDescription == "self" {
                 name = member.declName.baseName.text
-            } else { name = nil }
+            } else {
+                name = nil
+            }
             guard let name else {
                 throw MacroExpansionErrorMessage("Select '\(label)' using an existing direct domain property.")
             }
@@ -46,38 +50,51 @@ public struct Editor: MemberMacro {
         let create = try coordinate("create")
         let update = try coordinate("update")
         let delete = try coordinate("delete")
-        let deletionProperty = String(try argument("delete").trimmedDescription.split(separator: ".").last!)
+        guard let deletionName = try argument("delete").trimmedDescription.split(separator: ".").last else {
+            throw MacroExpansionErrorMessage("Select the existing delete operation using a key path.")
+        }
+        let deletionProperty = String(deletionName)
         guard let path = try argument("draft").as(KeyPathExprSyntax.self) else {
             throw MacroExpansionErrorMessage("Select the existing writable draft using a key path.")
         }
         let capitalized = name.prefix(1).uppercased() + name.dropFirst()
         let projection = "_\(capitalized)"
         let record = path.root?.trimmedDescription ?? "\(create).Output"
-        return [DeclSyntax(stringLiteral: """
-            public enum \(projection): Interface_ComposableArchitecture.Lens {
-                public typealias Record = \(record)
-                public typealias Draft = \(create).Input.Field
-                public static var path: Swift.WritableKeyPath<Record, Draft> { \(path) }
-                public static func deletedID(_ call: \(owner).Call) -> Record.ID? {
-                    guard let child = \(owner).Call.prisms.\(deletionProperty).extract(call),
-                        let request = \(delete).Primary.input(from: child) else { return nil }
-                    return request.fieldValue
-                }
-            }
-            """), DeclSyntax(stringLiteral: """
-            public typealias Editor = Interface_ComposableArchitecture.Editor<\(projection)>
-            """), DeclSyntax(stringLiteral: """
-            public func Editing(
-                create: \(create), update: \(update), delete: \(delete),
-                draft: Swift.WritableKeyPath<\(projection).Record, \(projection).Draft>,
-                blank: Interface_ComposableArchitecture.Editing<\(projection)>.Blank = .save,
-                commit: Interface_ComposableArchitecture.Editing<\(projection)>.Commit = .dismiss,
-                discard: Interface_ComposableArchitecture.Editing<\(projection)>.Discard = .delete
-            ) -> Interface_ComposableArchitecture.Editing<\(projection)> {
-                Interface_ComposableArchitecture.Editing<\(projection)>(
-                    create: create, update: update, delete: delete, draft: draft, blank: blank, commit: commit, discard: discard
-                )
-            }
-            """)]
+        return [
+            DeclSyntax(
+                stringLiteral: """
+                    public enum \(projection): Interface_ComposableArchitecture.Lens {
+                        public typealias Record = \(record)
+                        public typealias Draft = \(create).Input.Field
+                        public static var path: Swift.WritableKeyPath<Record, Draft> { \(path) }
+                        public static func deletedID(_ call: \(owner).Call) -> Record.ID? {
+                            guard let child = \(owner).Call.prisms.\(deletionProperty).extract(call),
+                                let request = \(delete).Primary.input(from: child) else { return nil }
+                            return request.fieldValue
+                        }
+                    }
+                    """
+            ),
+            DeclSyntax(
+                stringLiteral: """
+                    public typealias Editor = Interface_ComposableArchitecture.Editor<\(projection)>
+                    """
+            ),
+            DeclSyntax(
+                stringLiteral: """
+                    public func Editing(
+                        create: \(create), update: \(update), delete: \(delete),
+                        draft: Swift.WritableKeyPath<\(projection).Record, \(projection).Draft>,
+                        blank: Interface_ComposableArchitecture.Editing<\(projection)>.Blank = .save,
+                        commit: Interface_ComposableArchitecture.Editing<\(projection)>.Commit = .dismiss,
+                        discard: Interface_ComposableArchitecture.Editing<\(projection)>.Discard = .delete
+                    ) -> Interface_ComposableArchitecture.Editing<\(projection)> {
+                        Interface_ComposableArchitecture.Editing<\(projection)>(
+                            create: create, update: update, delete: delete, draft: draft, blank: blank, commit: commit, discard: discard
+                        )
+                    }
+                    """
+            ),
+        ]
     }
 }

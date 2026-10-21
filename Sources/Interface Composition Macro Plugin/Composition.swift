@@ -44,7 +44,8 @@ public struct Composition: MemberMacro {
         }
         func metatype(_ expression: ExprSyntax) throws -> String {
             guard let access = expression.as(MemberAccessExprSyntax.self),
-                access.declName.baseName.text == "self", let base = access.base else {
+                access.declName.baseName.text == "self", let base = access.base
+            else {
                 throw MacroExpansionErrorMessage("Use an explicit interface descriptor or operation type followed by .self.")
             }
             return base.trimmedDescription
@@ -64,7 +65,8 @@ public struct Composition: MemberMacro {
                 ["required", "presented", "observing"].contains(member.declName.baseName.text),
                 let first = call.arguments.first, first.label == nil,
                 call.arguments.count <= 2,
-                call.arguments.dropFirst().allSatisfy({ $0.label?.text == "initial" }) else {
+                call.arguments.dropFirst().allSatisfy({ $0.label?.text == "initial" })
+            else {
                 throw MacroExpansionErrorMessage("Choose .required(Member.self), .presented(Member.self), or .observing(Operation.self), with an optional initial value.")
             }
             let kind = member.declName.baseName.text
@@ -72,15 +74,24 @@ public struct Composition: MemberMacro {
                 throw MacroExpansionErrorMessage("A presented child starts absent; its request is supplied when presented.")
             }
             let type = try metatype(first.expression)
-            let name = kind == "observing" ? "observation" : String(type.split(separator: ".").last!)
+            guard let typeName = type.split(separator: ".").last else {
+                throw MacroExpansionErrorMessage("Name the selected member type.")
+            }
+            let name = kind == "observing" ? "observation" : String(typeName)
             guard !["writes", "value", "call", "Projection", "observation"].contains(name) || kind == "observing" else {
                 throw MacroExpansionErrorMessage("The selected member '\(name)' conflicts with composition runtime storage.")
             }
             guard !selections.contains(where: { $0.name == name }) else {
                 throw MacroExpansionErrorMessage("Select '\(name)' only once in this interpretation.")
             }
-            selections.append(Selection(kind: kind, type: type, name: name,
-                initial: call.arguments.dropFirst().first?.expression.trimmedDescription))
+            selections.append(
+                Selection(
+                    kind: kind,
+                    type: type,
+                    name: name,
+                    initial: call.arguments.dropFirst().first?.expression.trimmedDescription
+                )
+            )
         }
         let children = selections.filter { $0.kind != "observing" }
         let observing = selections.first { $0.kind == "observing" }
@@ -103,12 +114,14 @@ public struct Composition: MemberMacro {
             stateMembers.append("public var observation: Interface_ComposableArchitecture.Observing<\(observing.type)>.State")
             initializers.append("observation: Interface_ComposableArchitecture.Observing<\(observing.type)>.State = .init(\(observing.initial ?? ".init()"))")
             assignments.append("self.observation = observation")
-            stateMembers.append("""
+            stateMembers.append(
+                """
                 public var value: \(observing.type).Output.Element? { observation.value }
                 public subscript<Member>(dynamicMember path: Swift.KeyPath<\(observing.type).Output.Element, Member>) -> Member? {
                     observation.value?[keyPath: path]
                 }
-                """)
+                """
+            )
         }
         if calls != nil { stateMembers.append("@ComposableArchitecture2.StoreTaskID public var writes") }
         let cases = children.map { "case \($0.name)(\($0.feature).Action)" }
@@ -172,16 +185,16 @@ public struct Composition: MemberMacro {
         let bindingMembers = children.map { child in
             if child.kind == "required" {
                 return """
-                public var \(child.name): Interface_ComposableArchitecture.Bindings<\(child.feature).State, \(child.feature).Action> {
-                    .init(store.scope(\\.\(child.name), action: \\.\(child.name)))
-                }
-                """
+                    public var \(child.name): Interface_ComposableArchitecture.Bindings<\(child.feature).State, \(child.feature).Action> {
+                        .init(store.scope(\\.\(child.name), action: \\.\(child.name)))
+                    }
+                    """
             }
             return """
-            public var \(child.name): Interface_ComposableArchitecture.Presentation<\(child.feature).State, \(child.feature).Action> {
-                Interface_ComposableArchitecture.Bindings(store).presenting(\\.\(child.name), action: \\.\(child.name))
-            }
-            """
+                public var \(child.name): Interface_ComposableArchitecture.Presentation<\(child.feature).State, \(child.feature).Action> {
+                    Interface_ComposableArchitecture.Bindings(store).presenting(\\.\(child.name), action: \\.\(child.name))
+                }
+                """
         }.joined(separator: "\n")
         var result: [DeclSyntax] = [
             "public typealias State = _Composition.State",
@@ -190,45 +203,50 @@ public struct Composition: MemberMacro {
             "public static var scopes: Scopes { _Composition.scopes }",
             "public var composition: _Composition { _Composition(owner: self) }",
         ]
-        let declaresConformance = declaration.inheritanceClause?.inheritedTypes.contains {
-            $0.type.trimmedDescription.split(separator: ".").last == "FeatureProtocol"
-        } ?? false
+        let declaresConformance =
+            declaration.inheritanceClause?.inheritedTypes.contains {
+                $0.type.trimmedDescription.split(separator: ".").last == "FeatureProtocol"
+            } ?? false
         if declaresConformance && !hasBody { result.append("public var body: some Feature { composition }") }
-        result.append(DeclSyntax(stringLiteral: """
-            @ComposableArchitecture2.Feature
-            public struct _Composition: ComposableArchitecture2.FeatureProtocol {
-                \(observing == nil ? "" : "@dynamicMemberLookup")
-                public struct State: Interface_ComposableArchitecture.Discardable, Interface_ComposableArchitecture.Composite, ComposableArchitecture2._FeatureState, ComposableArchitecture2.ValueObservable, DebugSnapshots.DebugSnapshotConvertible {
-                    public mutating func discard() {
-                        \(children.map { "Interface_ComposableArchitecture.discardPresentation(&\($0.name))" }.joined(separator: "\n"))
+        result.append(
+            DeclSyntax(
+                stringLiteral: """
+                    @ComposableArchitecture2.Feature
+                    public struct _Composition: ComposableArchitecture2.FeatureProtocol {
+                        \(observing == nil ? "" : "@dynamicMemberLookup")
+                        public struct State: Interface_ComposableArchitecture.Discardable, Interface_ComposableArchitecture.Composite, ComposableArchitecture2._FeatureState, ComposableArchitecture2.ValueObservable, DebugSnapshots.DebugSnapshotConvertible {
+                            public mutating func discard() {
+                                \(children.map { "Interface_ComposableArchitecture.discardPresentation(&\($0.name))" }.joined(separator: "\n"))
+                            }
+                            public typealias Feature = _Composition
+                            public typealias Projection = _Composition.Projection
+                            public typealias Bindings = _Composition.Bindings
+                            \(stateMembers.joined(separator: "\n"))
+                            public init(\(initializers.joined(separator: ", "))) {
+                                \(assignments.joined(separator: "\n"))
+                            }
+                        }
+                        \(action)
+                        let owner: \(owner)
+                        public var body: some Feature {
+                            \(body)
+                        }
+                        @MainActor
+                        public struct Projection: Interface_ComposableArchitecture.Scoping {
+                            private let store: ComposableArchitecture2.Store<State, Action>
+                            public init(_ store: ComposableArchitecture2.Store<State, Action>) { self.store = store }
+                            \(projectionMembers)
+                        }
+                        @MainActor
+                        public struct Bindings: Interface_ComposableArchitecture.Scoping {
+                            private let store: ComposableArchitecture2.Store<State, Action>
+                            public init(_ store: ComposableArchitecture2.Store<State, Action>) { self.store = store }
+                            \(bindingMembers)
+                        }
                     }
-                    public typealias Feature = _Composition
-                    public typealias Projection = _Composition.Projection
-                    public typealias Bindings = _Composition.Bindings
-                    \(stateMembers.joined(separator: "\n"))
-                    public init(\(initializers.joined(separator: ", "))) {
-                        \(assignments.joined(separator: "\n"))
-                    }
-                }
-                \(action)
-                let owner: \(owner)
-                public var body: some Feature {
-                    \(body)
-                }
-                @MainActor
-                public struct Projection: Interface_ComposableArchitecture.Scoping {
-                    private let store: ComposableArchitecture2.Store<State, Action>
-                    public init(_ store: ComposableArchitecture2.Store<State, Action>) { self.store = store }
-                    \(projectionMembers)
-                }
-                @MainActor
-                public struct Bindings: Interface_ComposableArchitecture.Scoping {
-                    private let store: ComposableArchitecture2.Store<State, Action>
-                    public init(_ store: ComposableArchitecture2.Store<State, Action>) { self.store = store }
-                    \(bindingMembers)
-                }
-            }
-            """))
+                    """
+            )
+        )
         return result
     }
 }

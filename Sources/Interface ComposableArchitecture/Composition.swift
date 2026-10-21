@@ -10,15 +10,21 @@ public struct Selection {
     public static func required<Member: Interface.Member>(_ member: Member.Type) -> Self { Self() }
 
     public static func required<Member: Interface.Member, Initial>(
-        _ member: Member.Type, initial: Initial
+        _ member: Member.Type,
+        initial: Initial
     ) -> Self { Self() }
 
     public static func presented<Member: Interface.Member>(_ member: Member.Type) -> Self { Self() }
 
     public static func observing<Symbol: Operation.Operable>(
-        _ symbol: Symbol.Type, initial: Symbol.Input? = nil
-    ) -> Self where Symbol.Input: Copyable & Escapable & Equatable,
-        Symbol.Output: AsyncSequence, Symbol.Output.Element: Copyable & Escapable { Self() }
+        _ symbol: Symbol.Type,
+        initial: Symbol.Input? = nil
+    ) -> Self
+    where
+        Symbol.Input: Copyable & Escapable & Equatable,
+        Symbol.Output: AsyncSequence,
+        Symbol.Output.Element: Copyable & Escapable
+    { Self() }
 }
 
 /// Derives a product of selected child states and a sum of their routed actions.
@@ -27,7 +33,8 @@ public struct Selection {
 /// TCA's @Feature owns state observation, case paths, scopes, and runtime machinery.
 @attached(member, names: named(State), named(Action), named(Scopes), named(scopes), named(composition), named(body), named(_Composition))
 public macro Composition(
-    _ selections: Selection..., calls: Any.Type? = nil
+    _ selections: Selection...,
+    calls: Any.Type? = nil
 ) = #externalMacro(module: "Interface_Composition_Macro_Plugin", type: "Composition")
 
 /// A store projection exposes required children as scoped stores. It refers to
@@ -54,7 +61,23 @@ extension Store where State: Composite, Action == State.Projection.Action {
 
 /// Interpret a domain-first feature body using canonical Interface coordinates.
 /// The source extension explicitly declares FeatureProtocol on current Swift.
-@attached(member, names: named(State), named(Action), named(Scopes), named(scopes), named(composition), named(_Composition), named(Child), named(Children), named(Presenting), named(Observing), named(Requesting), named(Listing), named(Editing), named(_Rows))
+@attached(
+    member,
+    names: named(State),
+    named(Action),
+    named(Scopes),
+    named(scopes),
+    named(composition),
+    named(_Composition),
+    named(Child),
+    named(Children),
+    named(Presenting),
+    named(Observing),
+    named(Requesting),
+    named(Listing),
+    named(Editing),
+    named(_Rows)
+)
 public macro Feature() = #externalMacro(module: "Interface_Composition_Macro_Plugin", type: "Feature")
 
 /// Derive the selected draft coordinate beside an existing domain editing policy.

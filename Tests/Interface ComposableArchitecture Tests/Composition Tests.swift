@@ -1,7 +1,7 @@
-import DebugSnapshots
 import CasePaths
 import ComposableArchitecture2
 import ComposableArchitectureTestSupport
+import DebugSnapshots
 import Interface_ComposableArchitecture
 import Interface_Macro
 import Operation
@@ -47,10 +47,12 @@ extension CompositionRead: FeatureProtocol {
 @Suite struct `Composition Tests` {
     @Test func `required projection shares storage and sends once in the child lifetime`() async throws {
         let ledger = Ledger()
-        let root = CompositionRoot(branch: CompositionBranch(
-            reset: { _ in ledger.record("reset") },
-            form: CompositionCommand { ledger.record("form \($0.value)") }
-        ))
+        let root = CompositionRoot(
+            branch: CompositionBranch(
+                reset: { _ in ledger.record("reset") },
+                form: CompositionCommand { ledger.record("form \($0.value)") }
+            )
+        )
         let store = Store(initialState: CompositionRoot.State()) { root }
         let child: StoreOf<CompositionBranch> = store.branch
         child.form = .init(7)
@@ -68,10 +70,12 @@ extension CompositionRead: FeatureProtocol {
     }
 
     @Test func `property sending records errors on the scoped child's execution`() async throws {
-        let root = CompositionRoot(branch: CompositionBranch(
-            reset: { _ in throw Counter.Failure.refused },
-            form: CompositionCommand { _ in }
-        ))
+        let root = CompositionRoot(
+            branch: CompositionBranch(
+                reset: { _ in throw Counter.Failure.refused },
+                form: CompositionCommand { _ in }
+            )
+        )
         let store = Store(initialState: CompositionRoot.State()) { root }
         store.branch.reset()
         await #expect(throws: Counter.Failure.refused) { try await store.branch.writes() }
@@ -81,10 +85,12 @@ extension CompositionRead: FeatureProtocol {
 
     @Test func `root and child routes retain distinct destinations`() async throws {
         let ledger = Ledger()
-        let root = CompositionRoot(branch: CompositionBranch(
-            reset: { _ in ledger.record("reset") },
-            form: CompositionCommand { ledger.record("form \($0.value)") }
-        ))
+        let root = CompositionRoot(
+            branch: CompositionBranch(
+                reset: { _ in ledger.record("reset") },
+                form: CompositionCommand { ledger.record("form \($0.value)") }
+            )
+        )
         let store = Store(initialState: CompositionRoot.State()) { root }
         store.send(.call(.branch.reset()))
         try await store.writes()
@@ -94,10 +100,12 @@ extension CompositionRead: FeatureProtocol {
     }
 
     @Test func `a failed nested request stays presented with its own error`() async throws {
-        let root = CompositionRoot(branch: CompositionBranch(
-            reset: { _ in },
-            form: CompositionCommand { _ in throw Counter.Failure.refused }
-        ))
+        let root = CompositionRoot(
+            branch: CompositionBranch(
+                reset: { _ in },
+                form: CompositionCommand { _ in throw Counter.Failure.refused }
+            )
+        )
         let store = Store(initialState: CompositionRoot.State()) { root }
         store.branch.form = .init(7)
         let form = try #require(store.branch.scope(\.form))
@@ -111,7 +119,12 @@ extension CompositionRead: FeatureProtocol {
 
     @Test func `observation is actionless and retains the operation result`() async throws {
         let store = TestStore(initialState: CompositionRead.State()) {
-            CompositionRead { _ in AsyncThrowingStream { $0.yield(42); $0.finish() } }
+            CompositionRead { _ in
+                AsyncThrowingStream {
+                    $0.yield(42)
+                    $0.finish()
+                }
+            }
         }
         while store.value == nil { await Task.yield() }
         store.expect { $0.observation.value = 42 }

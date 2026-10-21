@@ -33,18 +33,18 @@ private struct PlainAction { var value: Int }
 }
 
 #if canImport(SwiftUI)
-import SwiftUI
+    import SwiftUI
 
-@MainActor @Test private func actionlessBindingSharesTheInstalledPresentationAndDismissesIt() async throws {
-    let ledger = Ledger()
-    @Bindable var store = Store(initialState: PlainParent.State()) { PlainParent(ledger: ledger) }
-    let presentation = $store.scope(\.presented)
-    let child = try #require(presentation.wrappedValue)
-    child[dynamicMember: \.self] = 17
-    #expect(store.state.presented == 17)
-    presentation.wrappedValue = nil
-    for _ in 0..<100 where ledger.entries.isEmpty { await Task.yield() }
-    #expect(store.state.presented == nil)
-    #expect(ledger.entries == ["dismissed"])
-}
+    @MainActor @Test private func actionlessBindingSharesTheInstalledPresentationAndDismissesIt() async throws {
+        let ledger = Ledger()
+        @Bindable var store = Store(initialState: PlainParent.State()) { PlainParent(ledger: ledger) }
+        let presentation = $store.scope(\.presented)
+        let child = try #require(presentation.wrappedValue)
+        child[dynamicMember: \.self] = 17
+        #expect(store.state.presented == 17)
+        presentation.wrappedValue = nil
+        for _ in 0..<100 where ledger.entries.isEmpty { await Task.yield() }
+        #expect(store.state.presented == nil)
+        #expect(ledger.entries == ["dismissed"])
+    }
 #endif

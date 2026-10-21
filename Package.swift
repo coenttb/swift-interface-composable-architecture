@@ -13,7 +13,7 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
-        .library(name: "Interface ComposableArchitecture", targets: ["Interface ComposableArchitecture"]),
+        .library(name: "Interface ComposableArchitecture", targets: ["Interface ComposableArchitecture"])
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-debug-snapshots", from: "0.4.0"),
@@ -73,14 +73,15 @@ let package = Package(
 )
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
-    target.swiftSettings = (target.swiftSettings ?? []) + [
-        .strictMemorySafety(),
-        .enableUpcomingFeature("ExistentialAny"),
-        .enableUpcomingFeature("InternalImportsByDefault"),
-        .enableUpcomingFeature("MemberImportVisibility"),
-        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-        .enableUpcomingFeature("InferIsolatedConformances"),
-    ]
+    target.swiftSettings =
+        (target.swiftSettings ?? []) + [
+            .strictMemorySafety(),
+            .enableUpcomingFeature("ExistentialAny"),
+            .enableUpcomingFeature("InternalImportsByDefault"),
+            .enableUpcomingFeature("MemberImportVisibility"),
+            .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+            .enableUpcomingFeature("InferIsolatedConformances"),
+        ]
 }
 
 // Integration consumers enforce import visibility at the compilation boundary.

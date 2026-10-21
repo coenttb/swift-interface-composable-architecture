@@ -1,7 +1,7 @@
 import CasePaths
 import Interface_ComposableArchitecture
-import Operation
 import Interface_Macro
+import Operation
 import Synchronization
 
 // A counter whose reads can also be observed: the fixture every bridge test runs against.

@@ -1,7 +1,7 @@
 public import ComposableArchitecture2
 public import Dependencies
-public import Operation
 public import Interface_Macro
+public import Operation
 
 // An operation's input being composed, then sent: the feature's actions are the calls of the operation's
 // interface, each run on `sending`; a call that succeeds dismisses the feature, one that fails stays, its error

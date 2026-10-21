@@ -23,7 +23,10 @@ private enum EditFailure: Error { case missing, denied }
     @Test func commitDistinguishesNewUnchangedChangedAndBlank() async throws {
         var events: [String] = []
         let feature = Editing<ItemDraft>(
-            create: { draft in events.append("create \(draft.title)"); return Item(id: 2, created: 456, draft: draft) },
+            create: { draft in
+                events.append("create \(draft.title)")
+                return Item(id: 2, created: 456, draft: draft)
+            },
             update: { item in events.append("update \(item.id) \(item.created) \(item.draft.title)") },
             delete: { events.append("delete \($0)") },
             blank: .discardNewDeleteExisting { $0.title.isEmpty }
@@ -43,8 +46,12 @@ private enum EditFailure: Error { case missing, denied }
     @Test func blankValuesAreSavedUnlessAPolicySaysOtherwise() async throws {
         var created = false
         let feature = Editing<ItemDraft>(
-            create: { draft in created = true; return Item(id: 2, created: 0, draft: draft) },
-            update: { _ in }, delete: { _ in }
+            create: { draft in
+                created = true
+                return Item(id: 2, created: 0, draft: draft)
+            },
+            update: { _ in },
+            delete: { _ in }
         )
         try await feature.commit(.init(Item.Draft(title: "")))
         #expect(created)
@@ -57,8 +64,12 @@ private enum EditFailure: Error { case missing, denied }
         await #expect(throws: EditFailure.denied) { try await update.commit(changed) }
         let create = Editing<ItemDraft>(create: { _ in throw EditFailure.missing }, update: { _ in }, delete: { _ in })
         await #expect(throws: EditFailure.missing) { try await create.commit(.init(Item.Draft(title: "New"))) }
-        let delete = Editing<ItemDraft>(create: { _ in original }, update: { _ in },
-            delete: { _ in throw EditFailure.denied }, blank: .discardNewDeleteExisting { $0.title.isEmpty })
+        let delete = Editing<ItemDraft>(
+            create: { _ in original },
+            update: { _ in },
+            delete: { _ in throw EditFailure.denied },
+            blank: .discardNewDeleteExisting { $0.title.isEmpty }
+        )
         changed.title = ""
         await #expect(throws: EditFailure.denied) { try await delete.commit(changed) }
     }
@@ -66,8 +77,14 @@ private enum EditFailure: Error { case missing, denied }
     @MainActor @Test func manualCommitDoesNotSaveOnDismount() async throws {
         var events: [String] = []
         let feature = Editing<ItemDraft>(
-            create: { draft in events.append(draft.title); return Item(id: 2, created: 0, draft: draft) },
-            update: { _ in }, delete: { _ in }, commit: .manual, discard: .manual
+            create: { draft in
+                events.append(draft.title)
+                return Item(id: 2, created: 0, draft: draft)
+            },
+            update: { _ in },
+            delete: { _ in },
+            commit: .manual,
+            discard: .manual
         )
         let state = Editing<ItemDraft>.State(Item.Draft(title: "Draft"))
         let store = TestStore(initialState: state) { feature }
@@ -79,8 +96,14 @@ private enum EditFailure: Error { case missing, denied }
 
     @MainActor @Test func dismountCommitsTheFinalDraftOnce() async throws {
         var events: [String] = []
-        let feature = Editing<ItemDraft>(create: { draft in events.append(draft.title); return Item(id: 2, created: 0, draft: draft) },
-            update: { _ in }, delete: { _ in })
+        let feature = Editing<ItemDraft>(
+            create: { draft in
+                events.append(draft.title)
+                return Item(id: 2, created: 0, draft: draft)
+            },
+            update: { _ in },
+            delete: { _ in }
+        )
         let store = TestStore(initialState: Editing<ItemDraft>.State(Item.Draft(title: "Before"))) { feature }
         store.modify { $0.title = "After" }
         await store.dismount()
@@ -109,8 +132,14 @@ private enum EditFailure: Error { case missing, denied }
 
 @Test private func discardingInvalidatesEarlierSessionSnapshots() async throws {
     var committed = false
-    let feature = Editing<ItemDraft>(create: { draft in committed = true; return Item(id: 2, created: 0, draft: draft) },
-        update: { _ in committed = true }, delete: { _ in committed = true })
+    let feature = Editing<ItemDraft>(
+        create: { draft in
+            committed = true
+            return Item(id: 2, created: 0, draft: draft)
+        },
+        update: { _ in committed = true },
+        delete: { _ in committed = true }
+    )
     var state = Editing<ItemDraft>.State(Item.Draft(title: "Unsaved"))
     let capturedBeforeRemoval = state
     state.discard()

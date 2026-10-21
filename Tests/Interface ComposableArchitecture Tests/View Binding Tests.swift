@@ -7,10 +7,12 @@ import Testing
 @Suite struct `View bindings` {
     @Test func `nested presentation retains its own state and command lifetime`() async throws {
         let ledger = Ledger()
-        let root = CompositionRoot(branch: CompositionBranch(
-            reset: { _ in ledger.record("reset") },
-            form: CompositionCommand { ledger.record("form \($0.value)") }
-        ))
+        let root = CompositionRoot(
+            branch: CompositionBranch(
+                reset: { _ in ledger.record("reset") },
+                form: CompositionCommand { ledger.record("form \($0.value)") }
+            )
+        )
         let store = Store(initialState: CompositionRoot.State()) { root }
         @Stored<CompositionRoot> var injected = store
         store.branch.form = .init(7)

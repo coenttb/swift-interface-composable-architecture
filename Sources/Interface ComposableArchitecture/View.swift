@@ -1,6 +1,6 @@
+public import CasePaths
 public import ComposableArchitecture2
 public import SwiftUI
-public import CasePaths
 
 /// Derive construction from a view's input product. An optional feature argument
 /// supplies its existing store and bindings; it never creates a feature or store.
@@ -9,9 +9,11 @@ public import CasePaths
 @attached(memberAttribute)
 @attached(extension, conformances: SwiftUI.View)
 @attached(member, names: named(store), named(_store), named($store), named(init))
-public macro View(_ feature: Any.Type? = nil) = #externalMacro(
-    module: "Interface_Composition_Macro_Plugin", type: "View"
-)
+public macro View(_ feature: Any.Type? = nil) =
+    #externalMacro(
+        module: "Interface_Composition_Macro_Plugin",
+        type: "View"
+    )
 
 /// Inject one existing store. Reading it participates in SwiftUI observation;
 /// its projection composes the feature's declared child coordinates.

@@ -11,10 +11,18 @@ public protocol Rows {
 
 /// Compose observation, canonical calls, and optional editing. Projections are
 /// coordinates into original domain values; there is no second result model.
-@ComposableArchitecture2.Feature public struct Listing<
-    Symbol: Operation.Operable, Call: Operation.Coproduct, Projection: Rows
-> where Symbol.Input: Copyable & Equatable, Symbol.Output: AsyncSequence,
-    Symbol.Output.Element == Projection.Value, Call: Copyable {
+@ComposableArchitecture2.Feature
+public struct Listing<
+    Symbol: Operation.Operable,
+    Call: Operation.Coproduct,
+    Projection: Rows
+>
+where
+    Symbol.Input: Copyable & Equatable,
+    Symbol.Output: AsyncSequence,
+    Symbol.Output.Element == Projection.Value,
+    Call: Copyable
+{
     public typealias Record = Projection.Draft.Record
     @dynamicMemberLookup
     public struct State: Discardable {
@@ -71,8 +79,10 @@ public protocol Rows {
     }
 
     public init<Policy: Editor<Projection.Draft>>(
-        _ query: Symbol.Owner, rows: KeyPath<Projection.Value, [Record]>,
-        editing: KeyPath<Call.Owner, Policy>, deleting: @escaping (Call) -> Record.ID?
+        _ query: Symbol.Owner,
+        rows: KeyPath<Projection.Value, [Record]>,
+        editing: KeyPath<Call.Owner, Policy>,
+        deleting: @escaping (Call) -> Record.ID?
     ) {
         precondition(rows == Projection.rows, "The listing must use its canonical rows projection")
         self.query = query

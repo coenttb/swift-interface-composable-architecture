@@ -6,10 +6,13 @@ import Testing
 
 @MainActor @Test func genericCommandFeatureUsesTheCanonicalNestedCall() async throws {
     let ledger = Ledger()
-    let domain = CounterDomain(counter: Counter(
-        increment: { ledger.record("increment \($0.amount)") },
-        observe: { _ in AsyncThrowingStream { $0.finish() } }, read: { _ in 42 }
-    ))
+    let domain = CounterDomain(
+        counter: Counter(
+            increment: { ledger.record("increment \($0.amount)") },
+            observe: { _ in AsyncThrowingStream { $0.finish() } },
+            read: { _ in 42 }
+        )
+    )
     let store = Store(initialState: Calling<CounterDomain.Call>.State()) {
         CounterDomain.Call.feature(domain)
     }
@@ -32,7 +35,8 @@ import Testing
 @MainActor @Test func indexedExecutionRecordsFailure() async throws {
     let counter = Counter(
         increment: { _ throws(Counter.Failure) in throw .refused },
-        observe: { _ in AsyncThrowingStream { $0.finish() } }, read: { _ in 0 }
+        observe: { _ in AsyncThrowingStream { $0.finish() } },
+        read: { _ in 0 }
     )
     let store = Store(initialState: Executing<Counter.Increment>.State(.init(by: 1))) {
         Executing<Counter.Increment>(counter)
@@ -66,7 +70,6 @@ extension ExtensionDomain: FeatureProtocol {
     store.operation = nil
     #expect(store.operation == nil)
 }
-
 
 private struct DefaultExtensionDomain {}
 @FeatureExtension

@@ -50,7 +50,6 @@ import Testing
     }
 }
 
-
 @MainActor @Test func replacedObservationCancelsTheOldLiveStream() async throws {
     let ledger = Ledger()
     let store = TestStore(initialState: Observing<Counter.Observe>.State(.init(from: 1))) {

@@ -30,8 +30,7 @@ extension Editing {
         public var body: some SwiftUI.View {
             if insertion == .beforeFirst { newEditor }
             ForEach(rows) { value in
-                if let editing, editing.state.id == value.id { content(editing).id(value.id) }
-                else { row(value) }
+                if let editing, editing.state.id == value.id { content(editing).id(value.id) } else { row(value) }
             }
             if insertion == .afterLast { newEditor }
         }

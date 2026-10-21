@@ -1,7 +1,7 @@
 public import ComposableArchitecture2
 public import Dependencies
-public import Operation
 public import Interface_Macro
+public import Operation
 public import SwiftUI
 
 // An operation followed: `value` is the latest element of the sequence the operation yields for `request`,

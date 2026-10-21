@@ -42,8 +42,14 @@ where State == Editing<Projection>.State, Action == Never {
         public var isDiscarded: Bool { lifetime.isDiscarded }
         public var draft: Draft
         public let original: Record?
-        public init(_ draft: Draft) { self.draft = draft; self.original = nil }
-        public init(_ original: Record) { self.draft = original[keyPath: Projection.path]; self.original = original }
+        public init(_ draft: Draft) {
+            self.draft = draft
+            self.original = nil
+        }
+        public init(_ original: Record) {
+            self.draft = original[keyPath: Projection.path]
+            self.original = original
+        }
         public var id: Record.ID? { original?.id }
         public var isSaved: Bool { original?[keyPath: Projection.path] == draft }
         public subscript<Value>(dynamicMember keyPath: WritableKeyPath<Draft, Value>) -> Value {
@@ -82,25 +88,44 @@ where State == Editing<Projection>.State, Action == Never {
         commit: Commit = .dismiss,
         discard: Discard = .delete
     ) {
-        self.create = create; self.update = update; self.delete = delete
-        self.blank = blank; self.commit = commit; self.discard = discard
+        self.create = create
+        self.update = update
+        self.delete = delete
+        self.blank = blank
+        self.commit = commit
+        self.discard = discard
     }
 
     /// Interpret the selected canonical operations without changing their relationships.
     public init<Create: Interface.Primary, Update: Interface.Primary, Delete: Interface.Primary>(
-        create: Create, update: Update, delete: Delete,
-        draft: WritableKeyPath<Record, Draft>, blank: Blank = .save,
-        commit: Commit = .dismiss, discard: Discard = .delete
-    ) where Create.Primary.Input: Operation.Unary,
-        Create.Primary.Input.Field == Draft, Create.Primary.Output == Record,
-        Update.Primary.Input: Operation.Unary, Update.Primary.Input.Field == Record,
-        Update.Primary.Output == Void, Delete.Primary.Input: Operation.Unary,
-        Delete.Primary.Input.Field == Record.ID, Delete.Primary.Output == Void {
+        create: Create,
+        update: Update,
+        delete: Delete,
+        draft: WritableKeyPath<Record, Draft>,
+        blank: Blank = .save,
+        commit: Commit = .dismiss,
+        discard: Discard = .delete
+    )
+    where
+        Create.Primary.Input: Operation.Unary,
+        Create.Primary.Input.Field == Draft,
+        Create.Primary.Output == Record,
+        Update.Primary.Input: Operation.Unary,
+        Update.Primary.Input.Field == Record,
+        Update.Primary.Output == Void,
+        Delete.Primary.Input: Operation.Unary,
+        Delete.Primary.Input.Field == Record.ID,
+        Delete.Primary.Output == Void
+    {
         precondition(draft == Projection.path, "The editing state and policy must use the same selected draft lens")
-        self.init(create: { try await Create.Primary.run(create, .init($0)) },
+        self.init(
+            create: { try await Create.Primary.run(create, .init($0)) },
             update: { try await Update.Primary.run(update, .init($0)) },
-            delete: { try await Delete.Primary.run(delete, .init($0)) }, blank: blank,
-            commit: commit, discard: discard)
+            delete: { try await Delete.Primary.run(delete, .init($0)) },
+            blank: blank,
+            commit: commit,
+            discard: discard
+        )
     }
 
     /// The same policy used by the feature, also available to non-UI interpreters.
@@ -109,10 +134,10 @@ where State == Editing<Projection>.State, Action == Never {
         let isBlank: Bool
         switch blank {
         case .save: isBlank = false
-        case let .discardNewDeleteExisting(predicate): isBlank = predicate(state.draft)
+        case .discardNewDeleteExisting(let predicate): isBlank = predicate(state.draft)
         }
         switch (state.original, isBlank) {
-        case let (original?, true): try await delete(original.id)
+        case (let original?, true): try await delete(original.id)
         case (_?, false) where !state.isSaved:
             guard let value = state.value else { return }
             try await update(value)
