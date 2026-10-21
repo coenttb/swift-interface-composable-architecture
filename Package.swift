@@ -13,7 +13,8 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
-        .library(name: "Interface ComposableArchitecture", targets: ["Interface ComposableArchitecture"])
+        .library(name: "Interface ComposableArchitecture", targets: ["Interface ComposableArchitecture"]),
+        .library(name: "Interface ComposableArchitecture SQLite", targets: ["Interface ComposableArchitecture SQLite"])
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-debug-snapshots", from: "0.4.0"),
@@ -25,6 +26,8 @@ let package = Package(
         .package(url: "https://github.com/swift-atoms/swift-either.git", branch: "main"),
         .package(url: "https://github.com/pointfreeco/swift-case-paths", branch: "protocol-case-paths"),
         .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
+        .package(url: "https://github.com/swift-compositions/swift-sqlite.git", branch: "main", traits: ["GRDB", "Observation"]),
+        .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.6.0"),
     ],
     targets: [
         .macro(
@@ -47,6 +50,22 @@ let package = Package(
                 .product(name: "Either", package: "swift-either"),
                 .product(name: "Operation", package: "swift-operation"),
                 .product(name: "Optic", package: "swift-optic"),
+            ]
+        ),
+        .target(
+            name: "Interface ComposableArchitecture SQLite",
+            dependencies: [
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "GRDB", package: "GRDB.swift"),
+                .product(name: "SQLite", package: "swift-sqlite"),
+            ]
+        ),
+        .testTarget(
+            name: "Interface ComposableArchitecture SQLite Tests",
+            dependencies: [
+                "Interface ComposableArchitecture SQLite",
+                .product(name: "Dependencies", package: "swift-dependencies"),
+                .product(name: "GRDB", package: "GRDB.swift"),
             ]
         ),
         .testTarget(
