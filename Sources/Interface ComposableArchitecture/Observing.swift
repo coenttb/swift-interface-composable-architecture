@@ -6,8 +6,9 @@ public import SwiftUI
 
 // An operation followed: `value` is the latest element of the sequence the operation yields for `request`,
 // and a new request restarts it. `Observing(reminders.read.page)` selects the domain's canonical primary
-// operation; its existing owner supplies the implementation. Every element lands in the animation the feature tree
-// declares with `animation(_:)`, as sqlite-data's animated fetches do; without one, each lands as it comes.
+// operation; its existing owner supplies the implementation. The first element for a request lands as it is; every
+// later one lands in the animation the feature tree declares with `animation(_:)`, as sqlite-data's animated fetches
+// do; without one, each lands as it comes.
 @ComposableArchitecture2.Feature public struct Observing<Symbol: Operation::Operation.Operable>
 where
     Symbol.Input: Swift.Copyable & Swift.Escapable & Swift.Equatable,
@@ -63,8 +64,16 @@ where
         ComposableArchitecture2.EmptyFeature()
             .onChange(of: store.request, initial: true) { _, request, _ in
                 store.addTask {
+                    var answered = false
                     for try await value in try await observe(request) {
-                        try withAnimation(animation) { _ = try store.modify { $0.value = value } }
+                        // The first answer to a request lands as it is: a new request is a new list. Later answers are
+                        // the store changing under the same request, and land in the animation.
+                        if answered {
+                            try withAnimation(animation) { _ = try store.modify { $0.value = value } }
+                        } else {
+                            _ = try store.modify { $0.value = value }
+                            answered = true
+                        }
                     }
                 }
             }
