@@ -15,7 +15,7 @@ import Testing
         )
         let store = Store(initialState: CompositionRoot.State()) { root }
         @Stored<CompositionRoot> var injected = store
-        store.branch.form = .init(7)
+        Bindable(store.branch).form.wrappedValue = .init(7)
         let binding: Binding<StoreOf<CompositionCommand>?> = $injected.branch.form
         let child = try #require(binding.wrappedValue)
         @Stored<CompositionCommand> var form = child
@@ -37,11 +37,11 @@ import Testing
         @Stored<CompositionRoot> var injected = store
         let binding: Binding<StoreOf<CompositionCommand>?> = $injected.branch.form
         #expect(binding.wrappedValue == nil)
-        store.branch.form = .init(7)
+        Bindable(store.branch).form.wrappedValue = .init(7)
         #expect(binding.wrappedValue?.request.value == 7)
         binding.wrappedValue = nil
         #expect(store.state.branch.form == nil)
-        store.branch.form = .init(19)
+        Bindable(store.branch).form.wrappedValue = .init(19)
         #expect(binding.wrappedValue?.request.value == 19)
     }
 
@@ -58,7 +58,7 @@ import Testing
         let store = Store(initialState: CompositionCommand.State(3)) { domain }
         let form = CommandView(store: store, title: "Request")
         #expect(form.request == 3)
-        store.request = .init(9)
+        Bindable(store).request.wrappedValue = .init(9)
         #expect(form.request == 9)
     }
 }

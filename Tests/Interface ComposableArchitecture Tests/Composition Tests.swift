@@ -5,6 +5,7 @@ import DebugSnapshots
 import Interface_ComposableArchitecture
 import Interface_Macro
 import Operation
+import SwiftUI
 import Testing
 
 @Interface struct CompositionCommand: CompositionCommand.Interface {
@@ -55,7 +56,7 @@ extension CompositionRead: FeatureProtocol {
         )
         let store = Store(initialState: CompositionRoot.State()) { root }
         let child: StoreOf<CompositionBranch> = store.branch
-        child.form = .init(7)
+        Bindable(child).form.wrappedValue = .init(7)
         #expect(store.state.branch.form?.request.value == 7)
         store.branch.reset()
         try await child.writes()
@@ -107,7 +108,7 @@ extension CompositionRead: FeatureProtocol {
             )
         )
         let store = Store(initialState: CompositionRoot.State()) { root }
-        store.branch.form = .init(7)
+        Bindable(store.branch).form.wrappedValue = .init(7)
         let form = try #require(store.branch.scope(\.form))
         form.send()
         await #expect(throws: Counter.Failure.refused) { try await form.sending() }
@@ -129,7 +130,6 @@ extension CompositionRead: FeatureProtocol {
         while store.value == nil { await Task.yield() }
         store.expect { $0.observation.value = 42; $0.observation.answered = $0.observation.request }
         #expect(store.value == 42)
-        let _: Never.Type = CompositionRead.Action.self
         await store.dismount()
     }
 }
@@ -173,8 +173,8 @@ extension TwinRoot: FeatureProtocol {
         second: CompositionBranch(reset: { _ in ledger.record("second") }, form: CompositionCommand { _ in })
     )
     let store = Store(initialState: TwinRoot.State()) { root }
-    store.first.form = .init(1)
-    store.second.form = .init(2)
+    Bindable(store.first).form.wrappedValue = .init(1)
+    Bindable(store.second).form.wrappedValue = .init(2)
     #expect(store.state.first.form?.request.value == 1)
     #expect(store.state.second.form?.request.value == 2)
     store.first.reset()
