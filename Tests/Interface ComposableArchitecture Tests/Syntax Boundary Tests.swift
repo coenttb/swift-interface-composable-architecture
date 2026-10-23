@@ -51,11 +51,11 @@
                 import Interface_ComposableArchitecture
                 import SwiftUI
                 @View struct WrappedInput {
-                    @AppStorage("count") var count: Int = 0
+                    @ScaledMetric var size: Double = 1
                 }
                 """
             )
-            #expect(diagnostic.contains("@View supports @Binding inputs and @State/@FocusState local storage"))
+            #expect(diagnostic.contains("other attributed inputs require explicit support"))
         }
 
         @Test func viewLocalStateMustBePrivate() throws {
