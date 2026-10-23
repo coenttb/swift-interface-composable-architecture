@@ -1,4 +1,4 @@
-import ComposableArchitecture2
+import ComposableArchitecture
 import Interface_ComposableArchitecture
 import Observation
 import SwiftUI
@@ -46,7 +46,7 @@ import Testing
     var body: some SwiftUI.View { Stepper("Count", value: $source.count) }
 }
 
-@ComposableArchitecture2.Feature private struct BindableCounter {
+@ComposableArchitecture.Feature private struct BindableCounter {
     struct State { var count = 0 }
 }
 

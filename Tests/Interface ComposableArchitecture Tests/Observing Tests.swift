@@ -1,4 +1,4 @@
-import ComposableArchitecture2
+import ComposableArchitecture
 import ComposableArchitectureTestSupport
 import Interface_ComposableArchitecture
 import Interface_Macro

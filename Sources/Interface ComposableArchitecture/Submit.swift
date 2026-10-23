@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import Operation
 public import SwiftUI
 

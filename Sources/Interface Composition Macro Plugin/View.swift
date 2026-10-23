@@ -65,8 +65,8 @@ public struct View: MemberMacro, MemberAttributeMacro, ExtensionMacro {
         var assignments: [String] = []
         var members: [DeclSyntax] = []
         if let domain {
-            members.append("@MainActor @Interface_ComposableArchitecture.Stored<\(raw: domain)> private var store: ComposableArchitecture2.StoreOf<\(raw: domain)>")
-            parameters.append("store: ComposableArchitecture2.StoreOf<\(domain)>")
+            members.append("@MainActor @Interface_ComposableArchitecture.Stored<\(raw: domain)> private var store: ComposableArchitecture.StoreOf<\(raw: domain)>")
+            parameters.append("store: ComposableArchitecture.StoreOf<\(domain)>")
             assignments.append("self._store = Interface_ComposableArchitecture.Stored(wrappedValue: store)")
         }
         for member in declaration.memberBlock.members {

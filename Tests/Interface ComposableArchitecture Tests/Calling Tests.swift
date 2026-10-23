@@ -1,11 +1,11 @@
-import ComposableArchitecture2
+import ComposableArchitecture
 import ComposableArchitectureTestSupport
 import Interface_ComposableArchitecture
 import Interface_Macro
 import Testing
 
 // A feature whose actions carry the counter's calls.
-@ComposableArchitecture2.Feature private struct Counting {
+@ComposableArchitecture.Feature private struct Counting {
     struct State {
         @StoreTaskID var writes
     }

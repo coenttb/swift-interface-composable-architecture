@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 
 /// Lexically supplied interface implementation. Nested interpretations reuse the
 /// enclosing model rather than looking up a second implementation globally.

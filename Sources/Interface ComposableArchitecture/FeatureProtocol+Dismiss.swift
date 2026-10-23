@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 
 extension FeatureProtocol where Action: Routed {
     /// Dismiss a matching presentation before executing the selected domain call.
@@ -29,7 +29,7 @@ private struct Dismissal<State, Action: Routed, Presented, ID: Equatable>: Featu
     let discarding: Bool
 
     func body(content: Content) -> some FeatureProtocol<State, Action> {
-        ComposableArchitecture2.Update { state, action in
+        ComposableArchitecture.Update { state, action in
             guard let call = action.interfaceCall,
                 let id = call[keyPath: operation],
                 state[keyPath: presentation]?[keyPath: identity] == id

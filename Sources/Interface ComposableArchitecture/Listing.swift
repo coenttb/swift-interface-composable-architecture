@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import Operation
 
 /// A selected collection projection and the editing lens for its existing rows.
@@ -11,7 +11,7 @@ public protocol Rows {
 
 /// Compose observation, canonical calls, and optional editing. Projections are
 /// coordinates into original domain values; there is no second result model.
-@ComposableArchitecture2.Feature
+@ComposableArchitecture.Feature
 public struct Listing<
     Symbol: Operation.Operable,
     Call: Operation.Coproduct,

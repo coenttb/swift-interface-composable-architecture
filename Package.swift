@@ -45,7 +45,7 @@ let package = Package(
                 "Interface Composition Macro Plugin",
                 .product(name: "Interface Macro", package: "swift-interface"),
                 .product(name: "CasePaths", package: "swift-case-paths"),
-                .product(name: "ComposableArchitecture2", package: "TCA26"),
+                .product(name: "ComposableArchitecture", package: "TCA26"),
                 .product(name: "Dependencies", package: "swift-dependencies"),
                 .product(name: "Either", package: "swift-either"),
                 .product(name: "Operation", package: "swift-operation"),

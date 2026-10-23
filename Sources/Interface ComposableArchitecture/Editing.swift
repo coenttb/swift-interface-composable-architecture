@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import Interface_Macro
 public import Operation
 import Synchronization
@@ -25,7 +25,7 @@ where State == Editing<Projection>.State, Action == Never {
 
 /// A reusable interpretation of a record's draft lens and create/update/delete arrows.
 /// Blank-draft and lifecycle behavior are explicit policies, not laws.
-@ComposableArchitecture2.Feature public struct Editing<Projection: Lens>: Editor {
+@ComposableArchitecture.Feature public struct Editing<Projection: Lens>: Editor {
     public typealias Record = Projection.Record
     public typealias Draft = Projection.Draft
     @dynamicMemberLookup

@@ -119,22 +119,22 @@ public struct Feature: MemberMacro {
                 let child = "\(owner).Structure.\(component.name)"
                 var feature: String
                 if kind == "Child" {
-                    feature = "ComposableArchitecture2.Scope(\\.\(component.name), action: \\.\(component.name)) { self[keyPath: \(child).path] }"
+                    feature = "ComposableArchitecture.Scope(\\.\(component.name), action: \\.\(component.name)) { self[keyPath: \(child).path] }"
                 } else {
-                    feature = "ComposableArchitecture2.EmptyFeature<State, Action>().ifLet(\\.\(component.name), action: \\.\(component.name)) { self[keyPath: \(child).path] }"
+                    feature = "ComposableArchitecture.EmptyFeature<State, Action>().ifLet(\\.\(component.name), action: \\.\(component.name)) { self[keyPath: \(child).path] }"
                 }
                 if !hasObservation, selections.first?.name == component.name {
                     feature += ".calling(\\.call, self, id: \\.writes)"
                 }
                 feature += ".interface(self)"
-                return "if path == \(child).path { return ComposableArchitecture2.AnyFeature(\(feature)) }"
+                return "if path == \(child).path { return ComposableArchitecture.AnyFeature(\(feature)) }"
             }.joined(separator: "\n")
             result.append(
                 DeclSyntax(
                     stringLiteral: """
-                        public func \(kind)<Child: ComposableArchitecture2.FeatureProtocol>(
+                        public func \(kind)<Child: ComposableArchitecture.FeatureProtocol>(
                             _ path: Swift.KeyPath<\(owner), Child>
-                        ) -> ComposableArchitecture2.AnyFeature<State, Action> {
+                        ) -> ComposableArchitecture.AnyFeature<State, Action> {
                             \(branches)
                             preconditionFailure("Select a child declared in this feature body")
                         }
@@ -148,10 +148,10 @@ public struct Feature: MemberMacro {
             result.append(
                 DeclSyntax(
                     stringLiteral: """
-                        public func Children<\(required.indices.map { "Child\($0): ComposableArchitecture2.FeatureProtocol" }.joined(separator: ", "))>(
+                        public func Children<\(required.indices.map { "Child\($0): ComposableArchitecture.FeatureProtocol" }.joined(separator: ", "))>(
                             \(parameters.joined(separator: ", "))
                         ) -> some Feature {
-                            ComposableArchitecture2.Features {
+                            ComposableArchitecture.Features {
                                 \(required.indices.map { "Child(child\($0))" }.joined(separator: "\n"))
                             }
                         }
@@ -164,7 +164,7 @@ public struct Feature: MemberMacro {
                 DeclSyntax(
                     stringLiteral: """
                         public func Observing(_ owner: \(owner)) -> some Feature {
-                            ComposableArchitecture2.Scope(\\.observation) {
+                            ComposableArchitecture.Scope(\\.observation) {
                                 Interface_ComposableArchitecture.Observing<\(owner).Primary>(owner)
                             }.interface(owner)
                         }

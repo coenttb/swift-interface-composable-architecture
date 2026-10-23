@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import Dependencies
 public import Interface_Macro
 public import Operation
@@ -7,7 +7,7 @@ public import Operation
 // interface, each run on `sending`; a call that succeeds dismisses the feature, one that fails stays, its error
 // on `sending`. `Requesting(reminders.lists.create)` selects the domain's canonical primary operation;
 // the interface runs the calls without the caller naming its operation symbol.
-@ComposableArchitecture2.Feature public struct Requesting<Symbol: Operation.Composed>
+@ComposableArchitecture.Feature public struct Requesting<Symbol: Operation.Composed>
 where
     Symbol.Input: Swift.Copyable & Swift.Escapable,
     Symbol.Call: Swift.Copyable
@@ -56,8 +56,8 @@ where
         self.interpret = { try await Symbol.Call.run(Dependency(path).wrappedValue, $0) }
     }
 
-    public var body: some ComposableArchitecture2.FeatureProtocol<State, Action> {
-        ComposableArchitecture2.Update { state, action in
+    public var body: some ComposableArchitecture.FeatureProtocol<State, Action> {
+        ComposableArchitecture.Update { state, action in
             guard !state.sending.isRunning else { return }
             store.addTask(id: state.sending) {
                 try await interpret(action)
@@ -67,7 +67,7 @@ where
     }
 }
 
-extension ComposableArchitecture2.Store {
+extension ComposableArchitecture.Store {
     // A requesting feature has one thing to send: its request, as the operation's call.
     public func send<Symbol: Operation.Composed>() where State == Requesting<Symbol>.State, Action == Symbol.Call {
         send(Symbol.call(state.request))

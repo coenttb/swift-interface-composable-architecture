@@ -123,7 +123,7 @@ public struct Composition: MemberMacro {
                 """
             )
         }
-        if calls != nil { stateMembers.append("@ComposableArchitecture2.StoreTaskID public var writes") }
+        if calls != nil { stateMembers.append("@ComposableArchitecture.StoreTaskID public var writes") }
         let cases = children.map { "case \($0.name)(\($0.feature).Action)" }
         let routing = children.filter { $0.kind == "required" }.map {
             """
@@ -162,13 +162,13 @@ public struct Composition: MemberMacro {
             action = "public enum Action: CasePaths.CasePathable {\n\(cases.joined(separator: "\n"))\n}"
         }
         var scopes = children.filter { $0.kind == "required" }.map {
-            "ComposableArchitecture2.Scope(\\.\($0.name), action: \\.\($0.name)) { owner[keyPath: \($0.type).path] }"
+            "ComposableArchitecture.Scope(\\.\($0.name), action: \\.\($0.name)) { owner[keyPath: \($0.type).path] }"
         }
         if let observing {
-            scopes.append("ComposableArchitecture2.Scope(\\.observation) { Interface_ComposableArchitecture.Observing<\(observing.type)>(owner) }")
+            scopes.append("ComposableArchitecture.Scope(\\.observation) { Interface_ComposableArchitecture.Observing<\(observing.type)>(owner) }")
         }
-        if scopes.isEmpty { scopes.append("ComposableArchitecture2.EmptyFeature<State, Action>()") }
-        var body = "ComposableArchitecture2.Features {\n\(scopes.joined(separator: "\n"))\n}"
+        if scopes.isEmpty { scopes.append("ComposableArchitecture.EmptyFeature<State, Action>()") }
+        var body = "ComposableArchitecture.Features {\n\(scopes.joined(separator: "\n"))\n}"
         if calls != nil { body += "\n.calling(\\.call, owner, id: \\.writes)" }
         for child in children where child.kind == "presented" {
             body += "\n.ifLet(\\.\(child.name), action: \\.\(child.name)) { owner[keyPath: \(child.type).path] }"
@@ -177,7 +177,7 @@ public struct Composition: MemberMacro {
         if sourceBody { body = "owner.body" }
         let projectionMembers = children.filter { $0.kind == "required" }.map {
             """
-            public var \($0.name): ComposableArchitecture2.Store<\($0.feature).State, \($0.feature).Action> {
+            public var \($0.name): ComposableArchitecture.Store<\($0.feature).State, \($0.feature).Action> {
                 store.scope(\\.\($0.name), action: \\.\($0.name))
             }
             """
@@ -211,10 +211,10 @@ public struct Composition: MemberMacro {
         result.append(
             DeclSyntax(
                 stringLiteral: """
-                    @ComposableArchitecture2.Feature
-                    public struct _Composition: ComposableArchitecture2.FeatureProtocol {
+                    @ComposableArchitecture.Feature
+                    public struct _Composition: ComposableArchitecture.FeatureProtocol {
                         \(observing == nil ? "" : "@dynamicMemberLookup")
-                        public struct State: Interface_ComposableArchitecture.Discardable, Interface_ComposableArchitecture.Composite, ComposableArchitecture2._FeatureState, ComposableArchitecture2.ValueObservable, DebugSnapshots.DebugSnapshotConvertible {
+                        public struct State: Interface_ComposableArchitecture.Discardable, Interface_ComposableArchitecture.Composite, ComposableArchitecture._FeatureState, ComposableArchitecture.ValueObservable, DebugSnapshots.DebugSnapshotConvertible {
                             public mutating func discard() {
                                 \(children.map { "Interface_ComposableArchitecture.discardPresentation(&\($0.name))" }.joined(separator: "\n"))
                             }
@@ -233,14 +233,14 @@ public struct Composition: MemberMacro {
                         }
                         @MainActor
                         public struct Projection: Interface_ComposableArchitecture.Scoping {
-                            private let store: ComposableArchitecture2.Store<State, Action>
-                            public init(_ store: ComposableArchitecture2.Store<State, Action>) { self.store = store }
+                            private let store: ComposableArchitecture.Store<State, Action>
+                            public init(_ store: ComposableArchitecture.Store<State, Action>) { self.store = store }
                             \(projectionMembers)
                         }
                         @MainActor
                         public struct Bindings: Interface_ComposableArchitecture.Scoping {
-                            private let store: ComposableArchitecture2.Store<State, Action>
-                            public init(_ store: ComposableArchitecture2.Store<State, Action>) { self.store = store }
+                            private let store: ComposableArchitecture.Store<State, Action>
+                            public init(_ store: ComposableArchitecture.Store<State, Action>) { self.store = store }
                             \(bindingMembers)
                         }
                     }

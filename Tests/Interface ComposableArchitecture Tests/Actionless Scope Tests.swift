@@ -1,10 +1,10 @@
-import ComposableArchitecture2
+import ComposableArchitecture
 import Interface_ComposableArchitecture
 import Testing
 
 // The parent action is an ordinary value, not an enum with a CasePathable marker.
 private struct PlainAction { var value: Int }
-@ComposableArchitecture2.Feature private struct PlainParent {
+@ComposableArchitecture.Feature private struct PlainParent {
     struct State {
         var permanent = 0
         var presented: Int? = 1

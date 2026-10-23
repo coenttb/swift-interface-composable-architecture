@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import Dependencies
 public import Interface_Macro
 public import Operation
@@ -10,7 +10,7 @@ public import SwiftUI
 // later one lands in the animation the feature tree declares with `animation(_:)`, as sqlite-data's animated fetches
 // do; without one, each lands as it comes. A request for the list already shown, arranged another way, is named with
 // `list(_:)`, and its first element lands in the animation too.
-@ComposableArchitecture2.Feature public struct Observing<Symbol: Operation::Operation.Operable>
+@ComposableArchitecture.Feature public struct Observing<Symbol: Operation::Operation.Operable>
 where
     Symbol.Input: Swift.Copyable & Swift.Escapable & Swift.Equatable,
     Symbol.Output: AsyncSequence,
@@ -65,8 +65,8 @@ where
         self.observe = { try await Symbol.run(Dependency(path).wrappedValue, $0) }
     }
 
-    public var body: some ComposableArchitecture2.FeatureProtocol<State, Action> {
-        ComposableArchitecture2.EmptyFeature()
+    public var body: some ComposableArchitecture.FeatureProtocol<State, Action> {
+        ComposableArchitecture.EmptyFeature()
             .onChange(of: store.request, initial: true) { _, request, state in
                 // Measured against the answer on screen, not the request before, which may never have been answered.
                 let arranged = state.answered.map { same($0, request) } ?? false

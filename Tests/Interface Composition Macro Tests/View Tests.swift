@@ -98,9 +98,9 @@
                         @FocusState
                         @MainActor private var focused: Bool
 
-                        @MainActor @Interface_ComposableArchitecture.Stored<Domain> private var store: ComposableArchitecture2.StoreOf<Domain>
+                        @MainActor @Interface_ComposableArchitecture.Stored<Domain> private var store: ComposableArchitecture.StoreOf<Domain>
 
-                        @MainActor init(store: ComposableArchitecture2.StoreOf<Domain>, browser: StoreOf<Browser>, selected: SwiftUI.Binding<Bool>) {
+                        @MainActor init(store: ComposableArchitecture.StoreOf<Domain>, browser: StoreOf<Browser>, selected: SwiftUI.Binding<Bool>) {
                             self._store = Interface_ComposableArchitecture.Stored(wrappedValue: store)
                             self._browser = SwiftUI.Bindable(browser)
                             self._selected = selected

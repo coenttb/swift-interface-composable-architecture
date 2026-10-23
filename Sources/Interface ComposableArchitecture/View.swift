@@ -1,5 +1,5 @@
 public import CasePaths
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import SwiftUI
 
 /// Derive construction from a view's input product. An optional feature argument

@@ -1,9 +1,9 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import Operation
 
 /// Execute an indexed operation without discarding its output. The request is its
 /// canonical Input and the result retains its canonical Output, with no Any payload.
-@ComposableArchitecture2.Feature public struct Executing<Symbol: Operation.Operable>
+@ComposableArchitecture.Feature public struct Executing<Symbol: Operation.Operable>
 where Symbol.Input: Copyable, Symbol.Output: Copyable {
     public struct State {
         public var request: Symbol.Input

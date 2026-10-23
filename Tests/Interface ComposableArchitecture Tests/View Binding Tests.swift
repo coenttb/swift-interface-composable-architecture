@@ -1,4 +1,4 @@
-import ComposableArchitecture2
+import ComposableArchitecture
 import Interface_ComposableArchitecture
 import SwiftUI
 import Testing

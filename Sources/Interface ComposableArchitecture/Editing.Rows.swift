@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import SwiftUI
 
 /// Only presentation: identity-based substitution and explicit insertion placement.

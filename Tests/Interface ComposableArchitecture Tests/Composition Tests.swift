@@ -1,5 +1,5 @@
 import CasePaths
-import ComposableArchitecture2
+import ComposableArchitecture
 import ComposableArchitectureTestSupport
 import DebugSnapshots
 import Interface_ComposableArchitecture

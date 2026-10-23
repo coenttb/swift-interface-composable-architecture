@@ -1,4 +1,4 @@
-import ComposableArchitecture2
+import ComposableArchitecture
 public import Operation
 
 extension Operation.Coproduct where Self: Copyable & Escapable {

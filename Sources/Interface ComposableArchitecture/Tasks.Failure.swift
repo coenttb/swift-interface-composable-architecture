@@ -1,4 +1,4 @@
-public import ComposableArchitecture2
+public import ComposableArchitecture
 public import SwiftUI
 
 /// Presents the first failure in the explicitly supplied task priority order.

@@ -8,9 +8,9 @@
         @Test func extensionMacroCannotIntroduceConformanceOnAnExtension() throws {
             let diagnostic = try rejected(
                 """
-                import ComposableArchitecture2
+                import ComposableArchitecture
                 struct Domain {}
-                @ComposableArchitecture2.Feature
+                @ComposableArchitecture.Feature
                 extension Domain {}
                 """
             )
@@ -20,7 +20,7 @@
         @Test func importedFeatureMacrosRequireDisambiguation() throws {
             let diagnostic = try rejected(
                 """
-                import ComposableArchitecture2
+                import ComposableArchitecture
                 import Interface_ComposableArchitecture
                 struct Domain {}
                 @Feature
@@ -35,7 +35,7 @@
         @Test func featureOnlyOpaqueResultDoesNotExposeEditingCapability() throws {
             let diagnostic = try rejected(
                 """
-                import ComposableArchitecture2
+                import ComposableArchitecture
                 import Interface_ComposableArchitecture
                 func erase<P: Lens>(_ value: Editing<P>) -> some FeatureProtocol<Editing<P>.State, Never> { value }
                 func consume<P: Lens>(_ value: some Editor<P>) {}
@@ -107,7 +107,7 @@
                 let target = "x86_64-apple-macos27.0"
             #endif
             let build = products.deletingLastPathComponent().deletingLastPathComponent()
-            let map = build.appendingPathComponent("Intermediates.noindex/GeneratedModuleMaps/ComposableArchitecture2RuntimeShims.modulemap")
+            let map = build.appendingPathComponent("Intermediates.noindex/GeneratedModuleMaps/ComposableArchitectureRuntimeShims.modulemap")
             process.arguments =
                 [
                     "swiftc", "-typecheck", "-swift-version", "6", "-target", target,
@@ -117,7 +117,7 @@
                     "-Xcc", "-fmodule-map-file=\(map.path)",
                 ]
                 + [
-                    "ComposableArchitecture2Macros#ComposableArchitecture2Macros",
+                    "ComposableArchitectureMacros#ComposableArchitectureMacros",
                     "Interface Composition Macro Plugin#Interface_Composition_Macro_Plugin",
                     "DebugSnapshotsMacros#DebugSnapshotsMacros",
                     "CasePathsMacros#CasePathsMacros",
