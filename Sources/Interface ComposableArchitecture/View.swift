@@ -32,20 +32,32 @@ public struct Bindings<State, Action> {
 
     @_disfavoredOverload
     public subscript<Member>(dynamicMember path: WritableKeyPath<State, Member>) -> Binding<Member> {
-        Bindable(store)[dynamicMember: \Store<State, Action>.[dynamicMember: path]]
+        Bindable(store)[dynamicMember: path]
     }
 
-    public subscript<Projection: Lens>(
-        dynamicMember path: WritableKeyPath<State, Editing<Projection>.State?>
-    ) -> Binding<Store<Editing<Projection>.State, Never>?> {
+    public subscript<Scope: ScopePath, Projection: Lens, Path: CasePath>(
+        dynamicMember path: KeyPath<State.Feature.Scopes, Scope>
+    ) -> Binding<Store<Editing<Projection>.State, Editing<Projection>.Action>?>
+    where
+        State: _FeatureState,
+        State.Feature: FeatureProtocol<State, Action>,
+        Scope.StatePath: WritableKeyPath<State, Editing<Projection>.State?>,
+        Scope.ActionPath: CaseKeyPath<Action, Path>,
+        Path.Value == Editing<Projection>.Action
+    {
         Bindable(store).scope(path)
     }
 
-    public func presenting<ChildState, Path: CasePath>(
-        _ state: WritableKeyPath<State, ChildState?>,
-        action: CaseKeyPath<Action, Path>
-    ) -> Binding<Store<ChildState, Path.Value>?> {
-        Bindable(store).scope(state, action: action)
+    public func presenting<Scope: ScopePath, ChildState, Path: CasePath>(
+        _ path: KeyPath<State.Feature.Scopes, Scope>
+    ) -> Binding<Store<ChildState, Path.Value>?>
+    where
+        State: _FeatureState,
+        State.Feature: FeatureProtocol<State, Action>,
+        Scope.StatePath: WritableKeyPath<State, ChildState?>,
+        Scope.ActionPath: CaseKeyPath<Action, Path>
+    {
+        Bindable(store).scope(path)
     }
 }
 

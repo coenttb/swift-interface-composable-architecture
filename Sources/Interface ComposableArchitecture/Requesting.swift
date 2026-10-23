@@ -73,3 +73,8 @@ extension ComposableArchitecture.Store {
         send(Symbol.call(state.request))
     }
 }
+
+extension Requesting.State.DebugSnapshot {
+    // @Feature's snapshot keeps the state's @dynamicMemberLookup; it forwards nothing.
+    public subscript(dynamicMember _: KeyPath<Self, Never>) -> Never { fatalError() }
+}

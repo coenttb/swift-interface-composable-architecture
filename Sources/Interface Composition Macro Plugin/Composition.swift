@@ -114,17 +114,11 @@ public struct Composition: MemberMacro {
             stateMembers.append("public var observation: Interface_ComposableArchitecture.Observing<\(observing.type)>.State")
             initializers.append("observation: Interface_ComposableArchitecture.Observing<\(observing.type)>.State = .init(\(observing.initial ?? ".init()"))")
             assignments.append("self.observation = observation")
-            stateMembers.append(
-                """
-                public var value: \(observing.type).Output.Element? { observation.value }
-                public subscript<Member>(dynamicMember path: Swift.KeyPath<\(observing.type).Output.Element, Member>) -> Member? {
-                    observation.value?[keyPath: path]
-                }
-                """
-            )
+            stateMembers.append("public var value: \(observing.type).Output.Element? { observation.value }")
         }
         if calls != nil { stateMembers.append("@ComposableArchitecture.StoreTaskID public var writes") }
-        let cases = children.map { "case \($0.name)(\($0.feature).Action)" }
+        var cases = children.map { "case \($0.name)(\($0.feature).Action)" }
+        if let observing { cases.append("case observation(Interface_ComposableArchitecture.Observing<\(observing.type)>.Action)") }
         let routing = children.filter { $0.kind == "required" }.map {
             """
             if let action = Interface_ComposableArchitecture.routeInterfaceCall(call, at: \\.\($0.name), through: \($0.feature).Action.self) {
@@ -152,17 +146,19 @@ public struct Composition: MemberMacro {
                                 return \(calls).cases.\(child.name).embed(call)
                             """
                         }.joined(separator: "\n"))
+                        \(observing == nil ? "" : "case .observation: return nil")
                         }
                     }
                 }
                 """
         } else if cases.isEmpty {
-            action = "public typealias Action = Swift.Never"
+            // @Feature supplies an action without cases.
+            action = ""
         } else {
             action = "public enum Action: CasePaths.CasePathable {\n\(cases.joined(separator: "\n"))\n}"
         }
         var scopes = children.filter { $0.kind == "required" }.map {
-            "ComposableArchitecture.Scope(\\.\($0.name), action: \\.\($0.name)) { owner[keyPath: \($0.type).path] }"
+            "ComposableArchitecture.Scope(\\.\($0.name)) { owner[keyPath: \($0.type).path] }"
         }
         if let observing {
             scopes.append("ComposableArchitecture.Scope(\\.observation) { Interface_ComposableArchitecture.Observing<\(observing.type)>(owner) }")
@@ -171,14 +167,14 @@ public struct Composition: MemberMacro {
         var body = "ComposableArchitecture.Features {\n\(scopes.joined(separator: "\n"))\n}"
         if calls != nil { body += "\n.calling(\\.call, owner, id: \\.writes)" }
         for child in children where child.kind == "presented" {
-            body += "\n.ifLet(\\.\(child.name), action: \\.\(child.name)) { owner[keyPath: \(child.type).path] }"
+            body += "\n.ifLet(\\.\(child.name)) { owner[keyPath: \(child.type).path] }"
         }
         body += "\n.interface(owner)"
         if sourceBody { body = "owner.body" }
         let projectionMembers = children.filter { $0.kind == "required" }.map {
             """
             public var \($0.name): ComposableArchitecture.Store<\($0.feature).State, \($0.feature).Action> {
-                store.scope(\\.\($0.name), action: \\.\($0.name))
+                store.scope(\\.\($0.name))
             }
             """
         }.joined(separator: "\n")
@@ -186,13 +182,13 @@ public struct Composition: MemberMacro {
             if child.kind == "required" {
                 return """
                     public var \(child.name): Interface_ComposableArchitecture.Bindings<\(child.feature).State, \(child.feature).Action> {
-                        .init(store.scope(\\.\(child.name), action: \\.\(child.name)))
+                        .init(store.scope(\\.\(child.name)))
                     }
                     """
             }
             return """
                 public var \(child.name): Interface_ComposableArchitecture.Presentation<\(child.feature).State, \(child.feature).Action> {
-                    Interface_ComposableArchitecture.Bindings(store).presenting(\\.\(child.name), action: \\.\(child.name))
+                    Interface_ComposableArchitecture.Bindings(store).presenting(\\.\(child.name))
                 }
                 """
         }.joined(separator: "\n")
@@ -213,8 +209,7 @@ public struct Composition: MemberMacro {
                 stringLiteral: """
                     @ComposableArchitecture.Feature
                     public struct _Composition: ComposableArchitecture.FeatureProtocol {
-                        \(observing == nil ? "" : "@dynamicMemberLookup")
-                        public struct State: Interface_ComposableArchitecture.Discardable, Interface_ComposableArchitecture.Composite, ComposableArchitecture._FeatureState, ComposableArchitecture.ValueObservable, DebugSnapshots.DebugSnapshotConvertible {
+                        public struct State: \(observing == nil ? "" : "Interface_ComposableArchitecture.Observed, ")Interface_ComposableArchitecture.Discardable, Interface_ComposableArchitecture.Composite, ComposableArchitecture._FeatureState, ComposableArchitecture.ValueObservable, DebugSnapshots.DebugSnapshotConvertible {
                             public mutating func discard() {
                                 \(children.map { "Interface_ComposableArchitecture.discardPresentation(&\($0.name))" }.joined(separator: "\n"))
                             }

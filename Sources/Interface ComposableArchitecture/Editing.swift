@@ -16,7 +16,7 @@ public protocol Lens {
 /// Editing exposes its selected lens and commit semantics through an opaque
 /// capability. A listing can compose it without knowing its implementation type.
 public protocol Editor<Projection>: FeatureProtocol
-where State == Editing<Projection>.State, Action == Never {
+where State == Editing<Projection>.State, Action == Editing<Projection>.Action {
     associatedtype Projection: Lens
     var commit: Editing<Projection>.Commit { get }
     var discard: Editing<Projection>.Discard { get }
@@ -62,8 +62,6 @@ where State == Editing<Projection>.State, Action == Never {
             return value
         }
     }
-    public typealias Action = Never
-
     public enum Blank {
         /// Blank drafts are ordinary values; creation and update proceed normally.
         case save
@@ -152,4 +150,9 @@ where State == Editing<Projection>.State, Action == Never {
             try await commit(store.state)
         }
     }
+}
+
+extension Editing.State.DebugSnapshot {
+    // @Feature's snapshot keeps the state's @dynamicMemberLookup; it forwards nothing.
+    public subscript(dynamicMember _: KeyPath<Self, Never>) -> Never { fatalError() }
 }

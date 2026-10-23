@@ -14,15 +14,17 @@ public protocol Rows {
 @ComposableArchitecture.Feature
 public struct Listing<
     Symbol: Operation.Operable,
-    Call: Operation.Coproduct,
+    Commands: Operation.Coproduct & Operation.Sending,
     Projection: Rows
 >
 where
     Symbol.Input: Copyable & Equatable,
     Symbol.Output: AsyncSequence,
     Symbol.Output.Element == Projection.Value,
-    Call: Copyable
+    Commands: Copyable
 {
+    /// The interface's calls; named apart from `Calls.Call`, which `Action` witnesses with it.
+    public typealias Call = Commands
     public typealias Record = Projection.Draft.Record
     @dynamicMemberLookup
     public struct State: Discardable {
@@ -45,11 +47,21 @@ where
             contents.value?[keyPath: Projection.rows] ?? []
         }
     }
-    public typealias Action = Call
+    /// The interface's calls, and the actions of the observation and the editor the listing scopes.
+    public enum Action: Routed, CasePathable {
+        public typealias Call = Commands
+        case call(Commands)
+        case contents(Observing<Symbol>.Action)
+        case editing(Editing<Projection.Draft>.Action)
+        public var interfaceCall: Commands? {
+            guard case let .call(call) = self else { return nil }
+            return call
+        }
+    }
     @FeatureEnvironment(Context<Call.Owner>.self) private var inheritedCommands
     private let query: Symbol.Owner
     private let explicitCommands: Call.Owner?
-    private let editor: (Call.Owner, StoreTaskID) -> AnyFeature<Editing<Projection.Draft>.State, Never>
+    private let editor: (Call.Owner, StoreTaskID) -> AnyFeature<Editing<Projection.Draft>.State, Editing<Projection.Draft>.Action>
     private let discard: (Call.Owner) -> Editing<Projection.Draft>.Discard
     private let deletedID: (Call) -> Record.ID?
 
@@ -102,14 +114,14 @@ where
     public var body: some Feature {
         Features {
             Update { state, action in
-                if discard(commands) == .delete, let id = deletedID(action), state.editing?.id == id {
+                if discard(commands) == .delete, case let .call(call) = action, let id = deletedID(call), state.editing?.id == id {
                     state.editing?.discard()
                     state.editing = nil
                 }
             }
             Scope(\.contents) { Observing<Symbol>(query) }
         }
-        .calling(commands, id: \.writes)
+        .calling(\.call, commands, id: \.writes)
         .ifLet(\.editing) { editor(commands, store.writes) }
     }
 }
@@ -118,7 +130,7 @@ where
 /// task identity, so failures survive the removal of its optional editor.
 private struct Session<Policy: Editor>: FeatureProtocol {
     typealias State = Policy.State
-    typealias Action = Never
+    typealias Action = Policy.Action
     let policy: Policy
     let writes: StoreTaskID
     let store = FeatureStore<State, Action>()
@@ -133,4 +145,9 @@ private struct Session<Policy: Editor>: FeatureProtocol {
             }
         }
     }
+}
+
+extension Listing.State.DebugSnapshot {
+    // @Feature's snapshot keeps the state's @dynamicMemberLookup; it forwards nothing.
+    public subscript(dynamicMember _: KeyPath<Self, Never>) -> Never { fatalError() }
 }

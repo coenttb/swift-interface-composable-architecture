@@ -39,8 +39,6 @@ where
         }
     }
 
-    public typealias Action = Never
-
     let observe: (Symbol.Input) async throws -> Symbol.Output
     // Whether a new request asks for the same list as the one answered; none does unless `list(_:)` says so.
     private var same: (Symbol.Input, Symbol.Input) -> Bool = { _, _ in false }
@@ -109,4 +107,9 @@ extension FeatureProtocol {
 private enum Delivery: FeatureEnvironmentKey {
     static var liveValue: SwiftUI.Animation? { nil }
     static var testValue: SwiftUI.Animation? { nil }
+}
+
+extension Observing.State.DebugSnapshot {
+    // @Feature's snapshot keeps the state's @dynamicMemberLookup; it forwards nothing.
+    public subscript(dynamicMember _: KeyPath<Self, Never>) -> Never { fatalError() }
 }

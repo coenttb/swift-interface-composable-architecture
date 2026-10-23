@@ -119,9 +119,9 @@ public struct Feature: MemberMacro {
                 let child = "\(owner).Structure.\(component.name)"
                 var feature: String
                 if kind == "Child" {
-                    feature = "ComposableArchitecture.Scope(\\.\(component.name), action: \\.\(component.name)) { self[keyPath: \(child).path] }"
+                    feature = "ComposableArchitecture.Scope(\\.\(component.name)) { self[keyPath: \(child).path] }"
                 } else {
-                    feature = "ComposableArchitecture.EmptyFeature<State, Action>().ifLet(\\.\(component.name), action: \\.\(component.name)) { self[keyPath: \(child).path] }"
+                    feature = "ComposableArchitecture.EmptyFeature<State, Action>().ifLet(\\.\(component.name)) { self[keyPath: \(child).path] }"
                 }
                 if !hasObservation, selections.first?.name == component.name {
                     feature += ".calling(\\.call, self, id: \\.writes)"
@@ -210,7 +210,7 @@ public struct Feature: MemberMacro {
         if kind == "Editing" {
             return [
                 DeclSyntax(stringLiteral: "public typealias State = Interface_ComposableArchitecture.Editing<\(projection)>.State"),
-                "public typealias Action = Swift.Never",
+                DeclSyntax(stringLiteral: "public typealias Action = Interface_ComposableArchitecture.Editing<\(projection)>.Action"),
                 DeclSyntax(
                     stringLiteral: """
                         public func Editing<Editor: Interface_ComposableArchitecture.Editor<\(projection)>>(
@@ -244,7 +244,7 @@ public struct Feature: MemberMacro {
                     """
             ),
             DeclSyntax(stringLiteral: "public typealias State = \(interpretation).State"),
-            DeclSyntax(stringLiteral: "public typealias Action = \(ancestor).Call"),
+            DeclSyntax(stringLiteral: "public typealias Action = \(interpretation).Action"),
             DeclSyntax(
                 stringLiteral: """
                     public func Listing<Editor: Interface_ComposableArchitecture.Editor<\(projection)>>(

@@ -8,14 +8,14 @@ extension Editing {
     public struct Rows<Row: SwiftUI.View, Editor: SwiftUI.View>: SwiftUI.View {
         public enum Insertion { case beforeFirst, afterLast }
         private let rows: [Projection.Record]
-        @Binding private var editing: Store<Editing<Projection>.State, Never>?
+        @Binding private var editing: Store<Editing<Projection>.State, Editing<Projection>.Action>?
         private let insertion: Insertion
         private let row: (Projection.Record) -> Row
         private let editor: (Binding<Projection.Draft>, @escaping () -> Void) -> Editor
 
         public init(
             _ rows: [Projection.Record],
-            editing: Binding<Store<Editing<Projection>.State, Never>?>,
+            editing: Binding<Store<Editing<Projection>.State, Editing<Projection>.Action>?>,
             insertion: Insertion,
             @ViewBuilder row: @escaping (Projection.Record) -> Row,
             @ViewBuilder editor: @escaping (Binding<Projection.Draft>, @escaping () -> Void) -> Editor
@@ -39,7 +39,7 @@ extension Editing {
             if let editing, editing.state.original == nil { content(editing) }
         }
 
-        private func content(_ editing: Store<Editing<Projection>.State, Never>) -> Editor {
+        private func content(_ editing: Store<Editing<Projection>.State, Editing<Projection>.Action>) -> Editor {
             editor(Bindable(editing).draft, { editing.dismiss() })
         }
     }
