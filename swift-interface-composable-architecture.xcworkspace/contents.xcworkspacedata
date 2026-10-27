@@ -5,18 +5,18 @@
       location = "group:.">
    </FileRef>
    <FileRef
-      location = "group:../../swift-molecules/swift-interface">
+      location = "group:../swift-interface">
    </FileRef>
    <FileRef
-      location = "group:../../swift-atoms/swift-operation">
+      location = "group:../swift-institute/swift-atoms/swift-operation">
    </FileRef>
    <FileRef
-      location = "group:../../swift-atoms/swift-product">
+      location = "group:../swift-institute/swift-atoms/swift-product">
    </FileRef>
    <FileRef
-      location = "group:../../swift-atoms/swift-coproduct">
+      location = "group:../swift-institute/swift-atoms/swift-coproduct">
    </FileRef>
    <FileRef
-      location = "group:../../swift-atoms/swift-optic">
+      location = "group:../swift-institute/swift-atoms/swift-optic">
    </FileRef>
 </Workspace>
